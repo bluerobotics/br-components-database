@@ -1,0 +1,56 @@
+{
+    "meta": {
+        "version": 0
+    },
+    "name": "My Database Library",
+    "description": "A database of components",
+    "source": {
+        "type": "odbc",
+        "dsn": "",
+        "username": "",
+        "password": "",
+        "timeout_seconds": 2,
+        "connection_string": "host=192.168.1.100 port=5432 dbname=br-parts user=pi password=BlueBoat2020 connect_timeout=10 sslmode=prefer host='192.168.1.100' dbname='pi'"
+    },
+    "libraries": [
+        {
+            "name": "Resistors",
+            "table": "Resistors",
+            "key": "ID",
+            "symbols": "Symbols",
+            "footprints": "Footprints",
+            "fields": [
+                {
+                    "column": "Value",
+                    "name": "Value",
+                    "visible_on_add": true,
+                    "visible_in_chooser": true,
+                    "show_name": false
+                },
+                {
+                    "column": "Manufacturer",
+                    "name": "Manufacturer",
+                    "visible_on_add": false,
+                    "visible_in_chooser": true,
+                    "show_name": true,
+                    "inherit_properties": true
+                },
+                {
+                    "column": "Manufacturer Part Num",
+                    "name": "Manufacturer Part Num",
+                    "visible_on_add": false,
+                    "visible_in_chooser": true,
+                    "show_name": true,
+                    "inherit_properties": true
+                }
+            ],
+            "properties": {
+                "description": "Description",
+                "footprint_filters": "Footprint Filters",
+                "keywords": "Keywords",
+                "exclude_from_bom": "No BOM",
+                "exclude_from_board": "Schematic Only"
+            }
+        }
+    ]
+}
