@@ -14,8 +14,8 @@
     },
     "libraries": [
         {
-            "name": "Resistors",
-            "table": "Resistors",
+            "name": "Parts",
+            "table": "Parts",
             "key": "ID",
             "symbols": "Symbols",
             "footprints": "Footprints",
@@ -28,19 +28,25 @@
                     "show_name": false
                 },
                 {
-                    "column": "Manufacturer",
-                    "name": "Manufacturer",
-                    "visible_on_add": false,
+                    "column": "Description",
+                    "name": "Description",
+                    "visible_on_add": true,
                     "visible_in_chooser": true,
-                    "show_name": true,
-                    "inherit_properties": true
+                    "show_name": false
                 },
                 {
-                    "column": "Manufacturer Part Num",
-                    "name": "Manufacturer Part Num",
+                    "column": "Category",
+                    "name": "Category",
+                    "visible_on_add": true,
+                    "visible_in_chooser": true,
+                    "show_name": false
+                },
+                {
+                    "column": "Datasheet",
+                    "name": "Datasheet",
                     "visible_on_add": false,
                     "visible_in_chooser": true,
-                    "show_name": true,
+                    "show_name": false,
                     "inherit_properties": true
                 }
             ],
