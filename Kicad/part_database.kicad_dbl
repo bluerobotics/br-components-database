@@ -10,7 +10,7 @@
         "username": "",
         "password": "",
         "timeout_seconds": 2,
-        "connection_string": "host=192.168.1.100 port=5432 dbname=br-parts user=pi password=BlueBoat2020 connect_timeout=10 sslmode=prefer host='192.168.1.100' dbname='pi'"
+        "connection_string": "Driver={PostgreSQL Unicode};Server=192.168.1.100;Port=5432;Username=pi;Password=BlueBoat2020;Database=pi;"
     },
     "libraries": [
         {
