@@ -53,6 +53,8 @@ os.chdir(SYMBOLS_PATH)
 for lib_file in glob.glob("*.kicad_sym"):
 
     lib_nickname = lib_file.replace(".kicad_sym", "")
+    if lib_nickname == "BR~Deprecated":
+        continue
     print(lib_nickname)
     lib_path = os.path.join(SYMBOLS_PATH, lib_file)
     lib_obj = kiutils.symbol.SymbolLib()
