@@ -1,0 +1,62 @@
+{
+    "meta": {
+        "version": 0
+    },
+    "name": "My Database Library",
+    "description": "A database of components",
+    "source": {
+        "type": "odbc",
+        "dsn": "",
+        "username": "",
+        "password": "",
+        "timeout_seconds": 2,
+        "connection_string": "Driver={PostgreSQL Unicode};Server=192.168.1.100;Port=5432;Username=pi;Password=BlueBoat2020;Database=pi;"
+    },
+    "libraries": [
+        {
+            "name": "Parts",
+            "table": "Parts",
+            "key": "ID",
+            "symbols": "Symbols",
+            "footprints": "Footprints",
+            "fields": [
+                {
+                    "column": "Value",
+                    "name": "Value",
+                    "visible_on_add": true,
+                    "visible_in_chooser": true,
+                    "show_name": false
+                },
+                {
+                    "column": "Description",
+                    "name": "Description",
+                    "visible_on_add": true,
+                    "visible_in_chooser": true,
+                    "show_name": false
+                },
+                {
+                    "column": "Category",
+                    "name": "Category",
+                    "visible_on_add": true,
+                    "visible_in_chooser": true,
+                    "show_name": false
+                },
+                {
+                    "column": "Datasheet",
+                    "name": "Datasheet",
+                    "visible_on_add": false,
+                    "visible_in_chooser": true,
+                    "show_name": false,
+                    "inherit_properties": true
+                }
+            ],
+            "properties": {
+                "description": "Description",
+                "footprint_filters": "Footprint Filters",
+                "keywords": "Keywords",
+                "exclude_from_bom": "No BOM",
+                "exclude_from_board": "Schematic Only"
+            }
+        }
+    ]
+}
