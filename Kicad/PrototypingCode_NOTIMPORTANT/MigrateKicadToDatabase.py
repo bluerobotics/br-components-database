@@ -8,7 +8,7 @@ import glob
 def generate_BRID(cursor):
 
     # Set number of digits in unique BRID
-    num_digits = 4      
+    num_digits = 6      
     
     # Gather all existing BRID's from the databasde
     cursor.execute('SELECT "ID" FROM public."Parts";')
@@ -19,7 +19,7 @@ def generate_BRID(cursor):
 
         # Convert to a zero padded string (to fill the desired number of digits -- e.g, 1 --> '0001')
         BR_num = str(n).zfill(num_digits)
-        BRID = 'BREE' + BR_num
+        BRID = 'BRE-' + BR_num
 
         # If the new BRID isn't currently used, we've found the one!
         if BRID not in existing_BRIDs:
@@ -102,6 +102,9 @@ for lib_file in glob.glob("*.kicad_sym"):
                     if supplier_numbers[number] not in null_strings:
                         cursor.execute('SELECT * FROM public."Vendors";')
                         cursor.execute('INSERT INTO public."Vendors"("ID", "Supplier", "SPN", "Stock") VALUES(%s, %s, %s, %s)', (BR_ID, supplier_names[name], supplier_numbers[number], 0))
+
+
+    break
                 
 
 
