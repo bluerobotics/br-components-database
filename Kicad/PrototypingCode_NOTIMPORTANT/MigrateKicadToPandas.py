@@ -1,14 +1,18 @@
+import psycopg2
 import kiutils.symbol
 import random
 import os
 import glob
-import pandas as pd
 
 #### Function for generating a unique BR ID ####
-def generate_BRID(existing_BRIDs):
+def generate_BRID(cursor):
 
     # Set number of digits in unique BRID
     num_digits = 6      
+    
+    # Gather all existing BRID's from the databasde
+    cursor.execute('SELECT "ID" FROM public."Parts";')
+    existing_BRIDs = [row[0] for row in cursor.fetchall()]
 
     # Increment by 1 until the BRID doesn't exist
     for n in range(10**num_digits):
@@ -23,9 +27,26 @@ def generate_BRID(existing_BRIDs):
 
     return BRID
 
-parts_df = pd.DataFrame(columns=['ID','Name','Description','Value','Symbol','Footprint','Datasheet','Manufacturer','MPN', 'Category'])
+# Connect to the database
+conn = psycopg2.connect(database = "pi",
+                        user = "pi",
+                        host = "192.168.1.100",
+                        password = "BlueBoat2020",
+                        port = 5432)
 
-parts_list = []
+# Initialize a cursor to navigate and edit the database
+cursor = conn.cursor()
+# Grab the column names of the Parts table
+cursor.execute('Select * FROM public."Parts" LIMIT 0')
+part_cols =  [desc[0] for desc in cursor.description]
+# Create a tuple of lists representing each row in the Parts table
+cursor.execute('SELECT * FROM public."Parts";')
+parts_table = cursor.fetchall()
+
+# Create a dictionary for each part (useful for pulling stuff out of database, not used here)
+for part in parts_table:
+    part_dict = {part_cols[idx]: value for idx, value in enumerate(part)}
+
 # Reading symbol libraries from our BR symbols folder
 SYMBOLS_PATH = "C:/Users/JacobBrotmanKrass/Documents/GitHub/br-kicad-lib/Symbols"
 os.chdir(SYMBOLS_PATH)
@@ -41,12 +62,18 @@ for lib_file in glob.glob("*.kicad_sym"):
     # The Category is the library nickname, without the BR_ at the beginning
     category = lib_nickname[3:]
 
-
+    # If this category is not yet in the Categories table, add it
+    cursor.execute('SELECT * FROM public."Categories";')
+    categories_db = [row[0] for row in cursor.fetchall()]
+    print(category)
+    if category not in categories_db:
+        cursor.execute('INSERT INTO public."Categories"("Category") VALUES(%s)', (category,))
 
     # For each symbol in a given library, populate a new row in the Parts table of the database
+    cursor.execute('SELECT * FROM public."Parts";')
     for symbol in sym_lib.symbols:
         symbol_path = f"{lib_nickname}:{symbol.entryName}"
-        BR_ID = generate_BRID(parts_df.BR_ID)
+        BR_ID = generate_BRID(cursor)
         properties = {property.key: property.value for property in symbol.properties}
         bad_char = b'\xc3\x82'.decode()
         print(properties)
@@ -58,8 +85,9 @@ for lib_file in glob.glob("*.kicad_sym"):
             manufacturer = "None"
             mpn = "None"
 
-        parts_list.append({"ID":BR_ID, "Name":symbol.libId, "Description":properties["Description"], "Value":properties["Value"], "Symbol":symbol_path, "Footprint":properties["Footprint"],  "Datasheet":properties["Datasheet"], "Manufacturer":manufacturer, "MPN":mpn, "Category":category})
-
+        cursor.execute('SELECT * FROM public."Parts";')
+        cursor.execute('INSERT INTO public."Parts"("ID", "Name", "Description", "Value", "Symbol", "Footprint",  "Datasheet", "Manufacturer", "MPN", "Category") VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)', (BR_ID, symbol.libId, properties["Description"], properties["Value"], symbol_path, properties["Footprint"], properties["Datasheet"], manufacturer, mpn, category))
+        
         print(properties["Description"])
 
         supplier_properties = {property: properties[property] for property in properties if property[:8]=="Supplier"}
@@ -76,6 +104,11 @@ for lib_file in glob.glob("*.kicad_sym"):
                         cursor.execute('INSERT INTO public."Vendors"("ID", "Supplier", "SPN", "Stock") VALUES(%s, %s, %s, %s)', (BR_ID, supplier_names[name], supplier_numbers[number], 0))
 
 
-parts_df = pd.DataFrame(parts_list)
+    break
                 
 
+
+
+
+conn.commit()
+conn.close()

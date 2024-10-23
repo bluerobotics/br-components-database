@@ -4,6 +4,7 @@ from PIL import Image, ImageTk
 import xmlrpc.client
 import traceback
 import string
+import os
 
 # Odoo connection details
 url = "https://dev17.apps.bluerobotics.com/"
@@ -106,6 +107,8 @@ style.map("TButton",
 
 # Adding the BR logo
 try:
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
+    print("Current working directory:", os.getcwd())
     br_logo_image = Image.open("br_logo.png")
     desired_width = 200
     aspect_ratio = br_logo_image.width / br_logo_image.height
