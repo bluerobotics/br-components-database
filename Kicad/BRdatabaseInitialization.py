@@ -106,17 +106,14 @@ for lib_file in glob.glob("*.kicad_sym"):
         # Grab all the properties from the Kicad Symbol
         properties = {property.key: property.value for property in symbol.properties}
 
-        # Remove a weird decoding error with the plus/minus sign
-        bad_char = b'\xc3\x82'.decode()
-        properties["Description"] = properties["Description"].replace(bad_char, '')
 
         # Some parts don't have a manufacturer and manufacturer part number -- deal with this some other time, for now just populate "None"
         if "Manufacturer" in properties:
             manufacturer = properties["Manufacturer"]
             mpn = properties["Manufacturer Part Num"]
         else:
-            manufacturer = "None"
-            mpn = "None"
+            manufacturer = ""
+            mpn = ""
 
         # Append a dictionary of all part properties to the parts list -- this will be converted to a Pandas dataframe at the end
         parts_list.append({"BR ID":BR_ID, "Name":symbol.libId, "Description":properties["Description"], "Value":properties["Value"], "Symbol":symbol_path, "Footprint":properties["Footprint"],  "Datasheet":properties["Datasheet"], "Manufacturer":manufacturer, "MPN":mpn, "Category":category})
@@ -143,7 +140,7 @@ for lib_file in glob.glob("*.kicad_sym"):
                         # this will be converted to Pandas dataframe at the end
                         vendors_list.append({"BR ID":BR_ID, "Supplier":supplier_names[name], "SPN":supplier_numbers[number], "Stock":0})
 
-    symbol_lib.to_file()
+    symbol_lib.to_file(encoding='utf-8')
 
 # Create Pandas dataframes from these lists of dictionaries
 # Think of each dictionary as a row in the table
