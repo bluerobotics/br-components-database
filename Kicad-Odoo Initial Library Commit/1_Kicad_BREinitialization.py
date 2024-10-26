@@ -45,8 +45,7 @@ def add_field_to_symbol(symbol_lib, symbol_name, field_name, field_value):
         raise ValueError(f'Symbol "{symbol_name}" not found in the library.')
 
     # Create the new field using kiutils' built-in property structure
-    field_id = len(symbol.properties)  # Set ID to the next available index
-    new_field = kiutils.symbol.Property(key=field_name, value=field_value, id=field_id, effects=kiutils.items.common.Effects(font=kiutils.items.common.Font(face=None, height=1.27, width=1.27, thickness=None, bold=False, italic=False, lineSpacing=None, color=None), justify=kiutils.items.common.Justify(horizontally=None, vertically=None, mirror=False), hide=True, href=None), showName=False)
+    new_field = kiutils.symbol.Property(key=field_name, value=field_value, effects=kiutils.items.common.Effects(font=kiutils.items.common.Font(face=None, height=1.27, width=1.27, thickness=None, bold=False, italic=False, lineSpacing=None, color=None), justify=kiutils.items.common.Justify(horizontally=None, vertically=None, mirror=False), hide=True, href=None), showName=False)
 
     # Add the new field to the symbol's properties
     symbol.properties.append(new_field)
@@ -59,6 +58,34 @@ def hide_attributes(symbol):
     for prop in symbol.properties:
         if prop.key != "Reference" and prop.key != "Value":
             prop.effects.hide = True
+
+def sort_symbol_fields(symbol):
+    """
+    Function to sort Kicad fields in a standard order, while not deleting any other fields (such as supplier info)
+
+    Parameters
+    ----------
+    symbol (kiutils symbol) : A symbol containing all of the 
+    """
+    
+    # This is the default order
+    main_fields = ['Reference', 'Value', 'Footprint', 'Datasheet', 'Manufacturer', 'Manufacturer Part Num', 'BRE Number']
+    
+    main_properties = []
+    for field in main_fields:
+        for prop in symbol.properties:
+            if prop.key == field:
+                main_properties.append(prop)
+
+    if len(main_properties) < len(main_fields):
+        raise ValueError(f'Symbol "{symbol.libId}" does not contain all of the required fields: {main_fields}.')
+    
+    other_properties = [prop for prop in symbol.properties if prop.key not in main_fields]
+
+    symbol.properties = main_properties + other_properties
+
+
+
 
 # Not really necessary, but initializes the dataframes. This is at good reference for the columns, at least
 parts_df = pd.DataFrame(columns=['BRE Number','Name','Description','Value','Symbol','Footprint','Datasheet','Manufacturer','MPN', 'Library'])
@@ -135,6 +162,7 @@ for lib_file in glob.glob("*.kicad_sym"):
 
         # Add BRE Number to the symbol
         add_field_to_symbol(symbol_lib, symbol.libId, "BRE Number", BRE)
+        sort_symbol_fields(symbol)
         hide_attributes(symbol)
 
         # Extract all supplier-related properties: supplier X with suppler number X

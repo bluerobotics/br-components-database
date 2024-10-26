@@ -17,8 +17,21 @@ uid = common.authenticate(db, username, password, {})
 models = xmlrpc.client.ServerProxy(f'{url}/xmlrpc/2/object')
 
 def submit_new_part(bre_number, description, datasheet, library, manufacturer, mpn):
-    """Function to submit a new part to Odoo."""
+    """
+    Function to submit a new part to Odoo. Will create the product and update its Vendor table.
 
+    Parameters
+    ----------
+    bre_number (str) : A unique product ID of the form [BRE-xxxxxx], this is the only circumstance where it is generated outside of Odoo
+    description (str) : The part's description, from the Description field in Kicad
+    datasheet (str) : The part datasheet's URL, from the Datasheet field in Kicad
+    library (str) : The BR Kicad Library name, extracted from the Kicad file name (ex: Capacitors_0402)
+    manufacturer (str) : The part's manufacturer, from the Manufacturer field in Kicad
+    mpn (str) : The part's manufacture part number, from the Manufacturer Part Num field in Kicad
+
+    """
+
+    company_id = models.execute_kw(db, uid, password, 'res.company', 'search', [[['name', 'ilike', "Blue Robotics Inc."]]])
 
     try:
         # Create the new product
@@ -31,8 +44,8 @@ def submit_new_part(bre_number, description, datasheet, library, manufacturer, m
             'mpn': mpn,
             'library': library,
             'sale_ok': False,
-            'detailed_type': "Storable Product",
-            'company_id': "Blue Robotics Inc.",
+            'detailed_type': "product",
+            'company_id': company_id[0],
         }])
 
         print(f"Success: New part created with ID {new_product_id}")
@@ -42,6 +55,32 @@ def submit_new_part(bre_number, description, datasheet, library, manufacturer, m
         error_message = traceback.format_exc()
         print(f"An error occurred: {error_message}")
 
+def add_vendor_info(bre_number, supplier, spn):
+    """
+    Function to add a supplier and supplier part number to a specified BRE numbered part in Odoo
+
+    Parameters
+    ----------
+    bre_number (str) : A unique product ID of the form [BRE-xxxxxx], links Odoo and Kicad parts together
+    supplier (str) : The supplier to be added to the specified part's Vendors table in Odoo
+    spn (str) : The respective supplier part number to be added to the Vendors table in Odoo
+    """
+    # Search for the supplier ID in res.partner (returns a list of matches, should just be the first one)
+    supplier_id = models.execute_kw(db, uid, password, 'res.partner', 'search', [[['name', 'ilike', supplier]]])
+    if not supplier_id:
+        print(f"Error: Supplier {supplier} not found.")
+        return
+    
+    # Search for the product ID (internal to Odoo, not the BRE)
+    product_id = models.execute_kw(db, uid, password, 'product.product', 'search', [[['default_code', '=', bre_number]]])
+
+    # Create a new vendor in the correct product's purchase page
+    models.execute_kw(db, uid, password, 'product.supplierinfo', 'create', [{
+        'product_id': product_id[0],
+        'partner_id': supplier_id[0],
+        'product_code': spn,
+    }])
+    
 def load_kicad_lib_as_dataframe(symbols_path):
     
     os.chdir(symbols_path)
@@ -66,8 +105,6 @@ def load_kicad_lib_as_dataframe(symbols_path):
         
         # The Category is the library nickname, without the BR_ at the beginning
         library = lib_nickname[3:]
-
-
 
         # For each symbol in a given library, populate a new row in the Parts dataframe
         for symbol in symbol_lib.symbols:
@@ -131,3 +168,6 @@ odoo_df = full_parts_df[["BRE Number", "Description", "Datasheet", "Manufacturer
 for idx, row in odoo_df.iloc[:10].iterrows():
     submit_new_part(row["BRE Number"], row["Description"], row["Datasheet"], row["Library"], row["Manufacturer"], row["MPN"])
     print(row["BRE Number"])
+    for idx, vendor in vendors_df[vendors_df["BRE Number"] == row["BRE Number"]].iterrows():
+        print(vendor["BRE Number"], vendor["Supplier"], vendor["SPN"])
+        add_vendor_info(vendor["BRE Number"], vendor["Supplier"], vendor["SPN"])
