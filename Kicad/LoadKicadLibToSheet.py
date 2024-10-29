@@ -4,8 +4,8 @@ import glob
 import pandas as pd
 
 # SET TO YOUR DESIRED PATHS ################################################################################
-SYMBOLS_PATH = r"C:/Users/JacobBrotmanKrass/Documents/Test Library/Symbols"
-OUTPUT_PATH = r"C:/Users/JacobBrotmanKrass/Documents/Test Library"
+SYMBOLS_PATH = r"C:\Users\emill\Documents\GitHub\br-kicad-lib\Symbols"
+OUTPUT_PATH = r"C:\Users\emill\Documents\GitHub\br-kicad-lib\Symbols"
 
 def hide_attributes(symbol):
 
@@ -70,8 +70,8 @@ for lib_file in glob.glob("*.kicad_sym"):
         # Symbol path in Kicad
         symbol_path = f"{lib_nickname}:{symbol.entryName}"
 
-        sort_symbol_fields(symbol)
-        hide_attributes(symbol)
+        #sort_symbol_fields(symbol)
+        #hide_attributes(symbol)
 
         # Grab all the properties from the Kicad Symbol
         properties = {property.key.strip(): property.value.strip() for property in symbol.properties}
