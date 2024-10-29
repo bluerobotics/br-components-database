@@ -1,4 +1,4 @@
-from odoo import models, fields
+from odoo import models, fields, api
 
 
 class ProductTemplate(models.Model):
@@ -15,16 +15,16 @@ class ProductTemplate(models.Model):
     # Define the related field for the description in the BRE Data tab
     bre_description = fields.Char(string='Description', store=True)
 
-    # Ensure synchronization between name and bre_description
+    # Ensure synchronization between name and bre_description as strings
     @api.onchange('bre_description')
     def _onchange_bre_description(self):
-        if self.bre_description != self.name:
-            self.name = self.bre_description
+        if self.bre_description and self.bre_description != self.name:
+            self.name = str(self.bre_description)
 
     @api.onchange('name')
     def _onchange_name(self):
-        if self.name != self.bre_description:
-            self.bre_description = self.name
+        if self.name and self.name != self.bre_description:
+            self.bre_description = str(self.name)
 
     def generate_bre_number(self):
         """Generate the next BRE Number for the product and set it to the default_code field."""
