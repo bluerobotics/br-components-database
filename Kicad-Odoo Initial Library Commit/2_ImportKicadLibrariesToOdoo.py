@@ -7,7 +7,7 @@ import kiutils.symbol, kiutils.items
 
 # Odoo connection details
 url = "https://dev2-v17.apps.bluerobotics.com/"
-db = "20241009"
+db = "20241009_v2"
 username = "engineering@bluerobotics.com"
 password = "VqqpHGVZCh3yfj7"
 
@@ -16,7 +16,40 @@ common = xmlrpc.client.ServerProxy(f'{url}/xmlrpc/2/common')
 uid = common.authenticate(db, username, password, {})
 models = xmlrpc.client.ServerProxy(f'{url}/xmlrpc/2/object')
 
-def submit_new_part(bre_number, description, datasheet, library, manufacturer, mpn):
+def generate_sort_value(component_value, library):
+    
+    # Dictionaries for storing various multipliers and their values
+    # Resistors will use an ohm as the base unit, while inductors and capacitors will use picos as their base unit
+    R_multipliers = {'m':10**(-3), 'R': 1, 'k': 10**3, 'M': 10**6, 'G':10**9}
+    LC_multipliers = {'p': 1, 'n': 10**3, 'u': 10**6, 'm':10**9, 'F':1, 'H':1, 'R':1}
+
+    # Initialize the numerical and multiplier portions of the value
+    numeric = ""
+    multiplier = 0
+
+    # We only extract the sorting value for passives
+    if 'Resistors' in library or 'Capacitors' in library or 'Inductors' in library:
+        
+        # Remove anything after the first substring (excludes the tolerance, voltage rating, etc)
+        full_value = component_value.split(' ')[0]
+
+        for char in full_value:
+            if char.isdigit():  # Numbers get concatenated to the numeric string as they are read
+                numeric += char
+            elif char.isalpha() and multiplier == 0:    # The first nonnumeric is interpreted as the multiplier
+                numeric += '.'
+                if 'Resistors' in library: multiplier = R_multipliers[char]
+                elif 'Capacitors' in library or 'Inductors' in library: multiplier = LC_multipliers[char]
+            else: break     # If the multiplier's been set, or the value string has ended, break from the loop (don't read in any more characters as a mulitplier)
+
+        sort_value = float(numeric) * multiplier
+
+    else:
+        sort_value = 0
+
+    return sort_value
+
+def submit_new_part(bre_number, description, value, datasheet, library, manufacturer, mpn):
     """
     Function to submit a new part to Odoo. Will create the product and update its Vendor table.
 
@@ -24,6 +57,7 @@ def submit_new_part(bre_number, description, datasheet, library, manufacturer, m
     ----------
     bre_number (str) : A unique product ID of the form [BRE-xxxxxx], this is the only circumstance where it is generated outside of Odoo
     description (str) : The part's description, from the Description field in Kicad
+    value (str) : The part's value, from the Value field in Kicad
     datasheet (str) : The part datasheet's URL, from the Datasheet field in Kicad
     library (str) : The BR Kicad Library name, extracted from the Kicad file name (ex: Capacitors_0402)
     manufacturer (str) : The part's manufacturer, from the Manufacturer field in Kicad
@@ -32,6 +66,9 @@ def submit_new_part(bre_number, description, datasheet, library, manufacturer, m
     """
 
     company_id = models.execute_kw(db, uid, password, 'res.company', 'search', [[['name', 'ilike', "Blue Robotics Inc."]]])
+    print(f"Value: {value}")
+    sort_value = generate_sort_value(value, library)
+    print(f"Sort: {sort_value}")
 
     try:
         # Create the new product
@@ -39,6 +76,8 @@ def submit_new_part(bre_number, description, datasheet, library, manufacturer, m
             'default_code': bre_number,
             'name': description,
             'bre_number': bre_number,
+            'component_value': value,
+            'component_sort': sort_value,
             'datasheet': datasheet,
             'manufacturer': manufacturer,
             'mpn': mpn,
@@ -114,6 +153,7 @@ def load_kicad_lib_as_dataframe(symbols_path):
 
             # Grab all the properties from the Kicad Symbol
             properties = {property.key: property.value for property in symbol.properties}
+            print(properties)
 
             # Some parts don't have a manufacturer and manufacturer part number -- deal with this some other time, for now just populate "None"
             if "Manufacturer" in properties:
@@ -151,7 +191,6 @@ def load_kicad_lib_as_dataframe(symbols_path):
                             vendors_list.append({"BRE Number":BRE, "Supplier":supplier_names[name], "SPN":supplier_numbers[number], "Stock":0})
 
 
-
     # Create Pandas dataframes from these lists of dictionaries
     # Think of each dictionary as a row in the table
     parts_df = pd.DataFrame(parts_list)
@@ -163,10 +202,12 @@ def load_kicad_lib_as_dataframe(symbols_path):
 SYMBOLS_PATH = r"C:/Users/JacobBrotmanKrass/Documents/Test Library/Symbols"
 
 full_parts_df, vendors_df = load_kicad_lib_as_dataframe(SYMBOLS_PATH)
-odoo_df = full_parts_df[["BRE Number", "Description", "Datasheet", "Manufacturer", "MPN", "Library"]]
+odoo_df = full_parts_df[["BRE Number", "Description", "Value", "Datasheet", "Manufacturer", "MPN", "Library"]].copy()
+odoo_df.drop_duplicates(subset='BRE Number', inplace=True)
 
-for idx, row in odoo_df.iloc[:10].iterrows():
-    submit_new_part(row["BRE Number"], row["Description"], row["Datasheet"], row["Library"], row["Manufacturer"], row["MPN"])
+
+for idx, row in odoo_df.iterrows():
+    submit_new_part(row["BRE Number"], row["Description"], row["Value"], row["Datasheet"], row["Library"], row["Manufacturer"], row["MPN"])
     print(row["BRE Number"])
     for idx, vendor in vendors_df[vendors_df["BRE Number"] == row["BRE Number"]].iterrows():
         print(vendor["BRE Number"], vendor["Supplier"], vendor["SPN"])

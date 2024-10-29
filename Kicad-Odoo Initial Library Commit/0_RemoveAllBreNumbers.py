@@ -62,14 +62,18 @@ for lib_file in glob.glob("*.kicad_sym"):
     # The Category is the library nickname, without the BR_ at the beginning
     category = lib_nickname[3:]
 
+    print("Removing old BRE Numbers and removing leading/trailing spaces from fields...")
     # For each symbol in a given library, populate a new row in the Parts dataframe
     for symbol in symbol_lib.symbols:
 
-        
         for property in symbol.properties:
+            
+            property.key = property.key.strip()
+            property.value = property.value.strip()
 
             if property.key[:5] == "BR ID" or property.key[:10] == "BRE Number":
                 symbol.properties.remove(property)
+
 
         hide_attributes(symbol)
 

@@ -78,6 +78,7 @@ def sort_symbol_fields(symbol):
                 main_properties.append(prop)
 
     if len(main_properties) < len(main_fields):
+        print(main_properties)
         raise ValueError(f'Symbol "{symbol.libId}" does not contain all of the required fields: {main_fields}.')
     
     other_properties = [prop for prop in symbol.properties if prop.key not in main_fields]
@@ -151,10 +152,11 @@ for lib_file in glob.glob("*.kicad_sym"):
         else:
             manufacturer = ""
             mpn = ""
+            add_field_to_symbol(symbol_lib, symbol.libId, "Manufacturer", "")
+            add_field_to_symbol(symbol_lib, symbol.libId, "Manufacturer Part Num", "")
             BRE = generate_BRE(BRE_list)
             BRE_list.append(BRE)
-
-
+            print(f"Added empty manufacturing fields to {symbol.libId}")
 
 
         # Append a dictionary of all part properties to the parts list -- this will be converted to a Pandas dataframe at the end

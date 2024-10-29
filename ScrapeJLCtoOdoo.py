@@ -8,7 +8,7 @@ jlc_path = os.path.join(root_folder, 'jlc-scraper')
 
 # Odoo connection details
 url = "https://dev2-v17.apps.bluerobotics.com/"
-db = "20241009"
+db = "20241009_v2"
 username = "engineering@bluerobotics.com"
 password = "VqqpHGVZCh3yfj7"
 
@@ -20,8 +20,6 @@ models = xmlrpc.client.ServerProxy(f'{url}/xmlrpc/2/object')
 print("Connected.")
 
 def load_odoo_vendors_as_df():
-
-
 
     print("Gathering all BRE parts from Odoo...")
     
@@ -48,25 +46,27 @@ def load_odoo_vendors_as_df():
     return supplierinfo_ids, odoo_vendors_list
 
 
-#subprocess.run(["python", os.path.join(jlc_path, 'jlc-scraper.py')])
+subprocess.run(["python", os.path.join(jlc_path, 'jlc-scraper.py')])
 
 # Create dataframe from the JLC scrape spreadsheet
 jlc_df = pd.read_excel(os.path.join(jlc_path, 'csv', r'Parts Inventory on JLCPCB.xlsx'))
 
 
-
+# Extract the Odoo supplierinfo_ids as a list, and load the respective vendor fields as a pandas DataFrame
 supplierinfo_ids, odoo_vendors = load_odoo_vendors_as_df()
 
 
-
+# Loop through all vendors in Odoo.
+# If the supplier part number matches the JLC number from the JLC scraper
+# add the JLC stock quantities to the respective Odoo field
 for supplierinfo_id, part in zip(supplierinfo_ids, odoo_vendors):
 
     jlc = jlc_df[jlc_df['JLCPCB Part #'] == part['SPN']]
 
     if not jlc.empty:
-        print(int(jlc['Global Sourcing Parts Qty']))
+        print(part['SPN'])
         models.execute_kw(db, uid, password, 'product.supplierinfo','write', [[supplierinfo_id], {
-            'x_studio_jlcpcb_inventory': int(jlc['JLCPCB Parts Qty']),
-            'x_studio_global_sourcing_indicators': int(jlc['Global Sourcing Parts Qty']),
-            'x_studio_consigned_inventory': int(jlc['Consigned Parts Qty']),
+            'jlcpcb_inventory': int(jlc['JLCPCB Parts Qty'].iloc[0]),
+            'global_sourcing_inventory': int(jlc['Global Sourcing Parts Qty'].iloc[0]),
+            'consigned_inventory': int(jlc['Consigned Parts Qty'].iloc[0]),
         }])

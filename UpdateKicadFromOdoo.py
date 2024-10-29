@@ -11,18 +11,18 @@ SYMBOLS_PATH = r"C:/Users/JacobBrotmanKrass/Documents/Test Library/Symbols"
 
 # Odoo connection details
 url = "https://dev2-v17.apps.bluerobotics.com/"
-db = "20241009"
+db = "20241009_v2"
 username = "engineering@bluerobotics.com"
 password = "VqqpHGVZCh3yfj7"
 
-def load_odoo_as_df():
+print("Establishing connection to Odoo Server...")
+# Establishing connection
+common = xmlrpc.client.ServerProxy(f'{url}/xmlrpc/2/common')
+uid = common.authenticate(db, username, password, {})
+models = xmlrpc.client.ServerProxy(f'{url}/xmlrpc/2/object')
+print("Connected.")
 
-    print("Establishing connection to Odoo Server...")
-    # Establishing connection
-    common = xmlrpc.client.ServerProxy(f'{url}/xmlrpc/2/common')
-    uid = common.authenticate(db, username, password, {})
-    models = xmlrpc.client.ServerProxy(f'{url}/xmlrpc/2/object')
-    print("Connected.")
+def load_odoo_as_df():
 
     print("Gathering all BRE parts from Odoo...")
     
@@ -37,11 +37,11 @@ def load_odoo_as_df():
     # If products are found, read the details of the products
     if product_ids:
         # Read details of the products found by their IDs
-        products = models.execute_kw(db, uid, password, 'product.product', 'read', [product_ids], {'fields': ['name', 'default_code', 'datasheet', 'manufacturer', 'mpn', 'library']})
+        products = models.execute_kw(db, uid, password, 'product.product', 'read', [product_ids], {'fields': ['name', 'default_code', 'component_value', 'datasheet', 'manufacturer', 'mpn', 'library']})
         
         # Print the products' details
         for product in products:
-            odoo_parts_list.append({'BRE Number': product['default_code'], 'Description': product['name'], 'Datasheet': product['datasheet'], 'Manufacturer': product['manufacturer'], 'MPN': product['mpn'], 'Library': product['library']})
+            odoo_parts_list.append({'BRE Number': product['default_code'], 'Description': product['name'], 'Value': product['component_value'], 'Datasheet': product['datasheet'], 'Manufacturer': product['manufacturer'], 'MPN': product['mpn'], 'Library': product['library']})
 
     else:
         print(f"No products found with default_code starting with: {default_code_prefix}")
@@ -175,13 +175,14 @@ def save_df_to_kicad_lib(updated_parts, symbols_path):
                     for property in symbol.properties:
                         if property.key == 'Description':
                             property.value = updated_part['Description']
+                        if property.key == 'Value':
+                            property.value = updated_part['Value']
                         if property.key == 'Datasheet':
                             property.value = updated_part['Datasheet']
                         if property.key == 'Manufacturer':
                             property.value = updated_part['Manufacturer']
                         if property.key == 'Manufacturer Part Num':
                             property.value = updated_part['MPN']
-                    print(symbol.properties)
                 
                 sort_symbol_fields(symbol)
                 hide_attributes(symbol)
@@ -259,10 +260,17 @@ def sort_symbol_fields(symbol):
 odoo_df = load_odoo_as_df()
 kicad_df, vendors_df = load_kicad_lib_as_dataframe(SYMBOLS_PATH)
 
+# We have to make sure there are no duplicate BRE numbers before updating the library--the process is one-to-one
+# It's set to keep the last of the duplicates, as that one seems to be the most likely to be different than the Odoo part
+# This is imperfect, but it's a pretty distant edge case 
+kicad_df.drop_duplicates(subset="BRE Number", keep='last', inplace=True)
 kicad_df.set_index("BRE Number", inplace=True)
 kicad_df.sort_index(inplace=True)
+
+odoo_df.drop_duplicates(subset="BRE Number", inplace=True)
 odoo_df.set_index("BRE Number", inplace=True)
 odoo_df.sort_index(inplace=True)
+odoo_df.drop(columns=['Library'], inplace=True)
 
 kicad_old = kicad_df.copy()
 
