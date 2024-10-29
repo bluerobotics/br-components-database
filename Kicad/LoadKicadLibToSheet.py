@@ -47,7 +47,7 @@ null_strings = ["", " ", "-", "--", "~", "NA", "N/A"]
 
 
 os.chdir(SYMBOLS_PATH)
-for lib_file in glob.glob("*.kicad_sym"):
+for lib_file in glob.glob("BR_Capacitors_0402.kicad_sym"):
 
     # Extract library nickname/library -- e.g., 0402_Capacitors
     lib_nickname = lib_file.replace(".kicad_sym", "")
@@ -75,6 +75,7 @@ for lib_file in glob.glob("*.kicad_sym"):
 
         # Grab all the properties from the Kicad Symbol
         properties = {property.key.strip(): property.value.strip() for property in symbol.properties}
+        properties["name"] = symbol.libId
 
         # Append a dictionary of all part properties to the parts list -- this will be converted to a Pandas dataframe at the end
         parts_list.append(properties)
