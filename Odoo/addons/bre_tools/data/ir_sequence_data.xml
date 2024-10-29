@@ -1,0 +1,11 @@
+<odoo>
+    <data noupdate="1">
+        <record id="seq_bre_number" model="ir.sequence">
+            <field name="name">BRE Number</field>
+            <field name="code">product.bre.sequence</field>
+            <field name="prefix">BRE-</field>
+            <field name="padding">6</field>
+            <field name="number_next">1000</field>
+        </record>
+    </data>
+</odoo>

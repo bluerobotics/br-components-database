@@ -1,0 +1,88 @@
+<odoo>
+    <record id="view_product_template_form_bre" model="ir.ui.view">
+        <field name="name">product.template.form.bre</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_only_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page string="BRE Data">
+                    <group style="margin-bottom: 20px;">
+                        <field name="bre_description" placeholder="Enter description here"/>
+                        <field name="component_value" placeholder="Enter value here"/>
+                        <field name="datasheet" widget="url" placeholder="Enter datasheet link here"/>
+                        <field name="manufacturer" placeholder="Enter manufacturer here"/>
+                        <field name="mpn" placeholder="Enter manufacturer part number here"/>
+                        <field name="library" readonly="1"/>
+                        <field name="component_sort" readonly="1"/>
+                        <field name="bre_number"/>
+                    </group>
+                    <button name="generate_bre_number" type="object" string="Generate BRE Number" class="btn oe_inline btn-primary" style="align-items: left;"/>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Extend the existing product.template.tree view to add MPN -->
+    <record id="view_product_template_tree_custom" model="ir.ui.view">
+        <field name="name">product.template.tree.custom</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_tree_view"/>
+        <field name="arch" type="xml">
+            <!-- Add the MPN field after the product name -->
+            <xpath expr="//field[@name='name']" position="after">
+                <field name="mpn"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Extend the existing product.template.kanban view to add MPN -->
+    <record id="view_product_template_kanban_custom" model="ir.ui.view">
+        <field name="name">product.template.kanban.custom</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_kanban_view"/>
+        <field name="arch" type="xml">
+            <!-- Add the MPN field in a new line under the product name -->
+            <xpath expr="//field[@name='name']" position="after">
+                <div class="text-muted" style="margin-top: 5px;">
+                    <field name="mpn"/>
+                </div>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_supplierinfo_tree_custom" model="ir.ui.view">
+        <field name="name">product.supplierinfo.tree.custom</field>
+        <field name="model">product.supplierinfo</field>
+        <field name="inherit_id" ref="product.product_supplierinfo_tree_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='product_code']" position="after">
+                <field name="jlcpcb_inventory" string="JLCPCB Inventory" groups="base.group_multi_company"/>
+                <field name="global_sourcing_inventory" string="Global Sourcing Inventory" groups="base.group_multi_company"/>
+                <field name="consigned_inventory" string="Consigned Inventory" groups="base.group_multi_company"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_product_template_tree_with_name" model="ir.ui.view">
+        <field name="name">product.template.tree.name</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_tree_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='default_code']" position="after">
+                <field name="name" string="Description"/>
+                <field name="component_sort" string="Sort Value"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_supplierinfo_tree_always_show_product_code" model="ir.ui.view">
+        <field name="name">product.supplierinfo.tree.always_show_product_code</field>
+        <field name="model">product.supplierinfo</field>
+        <field name="inherit_id" ref="product.product_supplierinfo_tree_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='product_code']" position="attributes">
+                <attribute name="optional">False</attribute>
+            </xpath>
+        </field>
+    </record>
+</odoo>
