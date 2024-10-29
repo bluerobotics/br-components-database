@@ -21,7 +21,7 @@ def generate_sort_value(component_value, library):
     # Dictionaries for storing various multipliers and their values
     # Resistors will use an ohm as the base unit, while inductors and capacitors will use picos as their base unit
     R_multipliers = {'m':10**(-3), 'R': 1, 'k': 10**3, 'M': 10**6, 'G':10**9}
-    LC_multipliers = {'p': 1, 'n': 10**3, 'u': 10**6, 'm':10**9, 'F':1, 'H':1, 'R':1}
+    LC_multipliers = {'p': 1, 'n': 10**3, 'u': 10**6, 'm':10**9, 'F':1, 'H':1, 'R':1, 'C':1, 'L':1}
 
     # Initialize the numerical and multiplier portions of the value
     numeric = ""
@@ -66,9 +66,7 @@ def submit_new_part(bre_number, description, value, datasheet, library, manufact
     """
 
     company_id = models.execute_kw(db, uid, password, 'res.company', 'search', [[['name', 'ilike', "Blue Robotics Inc."]]])
-    print(f"Value: {value}")
     sort_value = generate_sort_value(value, library)
-    print(f"Sort: {sort_value}")
 
     try:
         # Create the new product
@@ -153,7 +151,6 @@ def load_kicad_lib_as_dataframe(symbols_path):
 
             # Grab all the properties from the Kicad Symbol
             properties = {property.key: property.value for property in symbol.properties}
-            print(properties)
 
             # Some parts don't have a manufacturer and manufacturer part number -- deal with this some other time, for now just populate "None"
             if "Manufacturer" in properties:
