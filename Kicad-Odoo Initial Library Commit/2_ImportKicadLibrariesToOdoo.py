@@ -28,7 +28,7 @@ def generate_sort_value(component_value, library):
     multiplier = 0
 
     # We only extract the sorting value for passives
-    if 'Resistors' in library or 'Capacitors' in library or 'Inductors' in library:
+    if 'Resistors' in library or 'Capacitors' in library:
         
         # Remove anything after the first substring (excludes the tolerance, voltage rating, etc)
         full_value = component_value.split(' ')[0]
@@ -39,7 +39,7 @@ def generate_sort_value(component_value, library):
             elif char.isalpha() and multiplier == 0:    # The first nonnumeric is interpreted as the multiplier
                 numeric += '.'
                 if 'Resistors' in library: multiplier = R_multipliers[char]
-                elif 'Capacitors' in library or 'Inductors' in library: multiplier = LC_multipliers[char]
+                elif 'Capacitors' in library : multiplier = LC_multipliers[char]
             else: break     # If the multiplier's been set, or the value string has ended, break from the loop (don't read in any more characters as a mulitplier)
 
         sort_value = float(numeric) * multiplier
