@@ -2,6 +2,7 @@ from selenium import webdriver
 from bs4 import BeautifulSoup
 import re
 import requests
+import base64
 import time
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -10,7 +11,7 @@ import os
 from argparse import ArgumentParser
 
 
-def get_lcsc_url(part_number):
+def get_lcsc_part_url(part_number):
 
     # Initialize the WebDriver
     driver = webdriver.Chrome()  # Provide the path to chromedriver if needed
@@ -25,10 +26,16 @@ def get_lcsc_url(part_number):
 
     return part_url
 
-def scrape_image_from_lcsc(part_number, output_path):
+def get_lcsc_image_url(part_number):
+
+    # Set up Chrome options for headless mode
+    options = webdriver.ChromeOptions()
+    options.add_argument("--headless")  # Run in headless mode
+    options.add_argument("--no-sandbox")  # Optional: for compatibility
+    options.add_argument("--disable-dev-shm-usage")  # Optional: for compatibility
 
     # Initialize the WebDriver
-    driver = webdriver.Chrome()  # Provide the path to chromedriver if needed
+    driver = webdriver.Chrome(options)  # Provide the path to chromedriver if needed
 
     # Construct and open the search URL
     search_url = f"https://www.lcsc.com/search?q={part_number}"
@@ -66,31 +73,40 @@ def scrape_image_from_lcsc(part_number, output_path):
     # If we found the image URL, download the image with headers
     if image_url:
         print("Image URL:", image_url)
-
-        # Add headers to mimic a real browser request
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36"
-        }
-
-        # Download the image
-        response = requests.get(image_url, headers=headers)
-        if response.status_code == 200:
-
-            file_path = os.path.join(output_path, part_number.jpg)
-            with open(file_path, "wb") as file:
-                file.write(response.content)
-            print(f"Image downloaded as '{file_path}.jpg'.")
-        else:
-            print("Failed to download image. Status code:", response.status_code)
+        return image_url
     else:
         print("Image URL not found.")
+    
+def download_image(part_number, image_url, output_path):
+        
+
+    # Add headers to mimic a real browser request
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36"
+    }
+
+    # Download the image
+    response = requests.get(image_url, headers=headers)
+    if response.status_code == 200:
+
+        file_path = os.path.join(output_path, part_number+'.jpg')
+        with open(file_path, "wb") as file:
+            file.write(response.content)
+        print(f"Image downloaded as '{file_path}'.")
+    else:
+        print("Failed to download image. Status code:", response.status_code)
+
+
+
 
 
 parser = ArgumentParser()
-parser.add_argument("part_number", type='str')
-parser.add_argement("image_path", type='str')
+parser.add_argument("part_number")
+parser.add_argument("image_path")
 args = parser.parse_args()
 print(f"Grabbing image for part number {args.part_number}")
 
-scrape_image_from_lcsc(args.part_number, args.image_path)
+image_url = get_lcsc_image_url(args.part_number, args.image_path)
+download_image(args.part_number, image_url, args.image_path)
+
 

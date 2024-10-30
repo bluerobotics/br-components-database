@@ -32,18 +32,21 @@ def load_odoo_vendors_as_df():
     # Step 1: Check if any supplier info records exist for the given product template IDs
     supplierinfo_ids = models.execute_kw(db, uid, password, 'product.supplierinfo', 'search', [[['product_id', 'in', product_ids]]])
     product_bres = models.execute_kw(db, uid, password, 'product.product', 'read', [product_ids], {'fields': ['default_code']})
+    product_bre_map = {product['id']: product['default_code'] for product in product_bres}
 
     odoo_vendors_list = []
 
     # Step 2: If supplierinfo_ids is not empty, read the records
     if supplierinfo_ids:
-        products = models.execute_kw(db, uid, password, 'product.supplierinfo', 'read', [supplierinfo_ids], {'fields': ['partner_id', 'product_code']})
-        for product, product_bre in zip(products, product_bres):
-            odoo_vendors_list.append({'BRE Number': product_bre['default_code'], 'Supplier': product['partner_id'], 'SPN': product['product_code']})
+        suppliers = models.execute_kw(db, uid, password, 'product.supplierinfo', 'read', [supplierinfo_ids], {'fields': ['partner_id', 'product_code', 'product_id']})
+        for supplier in suppliers:
+            odoo_vendors_list.append({'BRE Number': product_bre_map[supplier['product_id'][0]], 'Supplier': supplier['partner_id'][1], 'SPN': supplier['product_code']})
     else:
         print("No supplier information found for the provided product template IDs.")
 
-    return supplierinfo_ids, odoo_vendors_list
+    odoo_vendors_df = pd.DataFrame(odoo_vendors_list)
+
+    return supplierinfo_ids, odoo_vendors_df
 
 
 subprocess.run(["python", os.path.join(jlc_path, 'jlc-scraper.py')])
@@ -53,13 +56,14 @@ jlc_df = pd.read_excel(os.path.join(jlc_path, 'csv', r'Parts Inventory on JLCPCB
 
 
 # Extract the Odoo supplierinfo_ids as a list, and load the respective vendor fields as a pandas DataFrame
-supplierinfo_ids, odoo_vendors = load_odoo_vendors_as_df()
+supplierinfo_ids, odoo_vendors_df = load_odoo_vendors_as_df()
+odoo_vendors_list = odoo_vendors_df.to_dict(orient='records')
 
 
 # Loop through all vendors in Odoo.
 # If the supplier part number matches the JLC number from the JLC scraper
 # add the JLC stock quantities to the respective Odoo field
-for supplierinfo_id, part in zip(supplierinfo_ids, odoo_vendors):
+for supplierinfo_id, part in zip(supplierinfo_ids, odoo_vendors_list):
 
     jlc = jlc_df[jlc_df['JLCPCB Part #'] == part['SPN']]
 
