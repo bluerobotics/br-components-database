@@ -8,7 +8,7 @@ class ProductTemplate(models.Model):
     component_value = fields.Char(string='Value')
     datasheet = fields.Char(string='Datasheet')
     manufacturer = fields.Char(string='Manufacturer')
-    mpn = fields.Char(string='Manufacturer Part Number')
+    mpn = fields.Char(string='Mfg Part Num')
     library = fields.Char(string='Library', readonly=True)
     component_sort = fields.Float(string='Component Sort', readonly=True)
 
