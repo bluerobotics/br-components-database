@@ -21,7 +21,7 @@ def generate_sort_value(component_value, library):
     # Dictionaries for storing various multipliers and their values
     # Resistors will use an ohm as the base unit, while inductors and capacitors will use picos as their base unit
     R_multipliers = {'m':10**(-3), 'R': 1, 'k': 10**3, 'M': 10**6, 'G':10**9}
-    LC_multipliers = {'p': 1, 'n': 10**3, 'u': 10**6, 'm':10**9, 'F':1, 'H':1, 'R':1, 'C':1, 'L':1}
+    LC_multipliers = {'p': 1, 'n': 10**3, 'u': 10**6, 'm':10**9, 'F':1, 'H':1, 'R':1}
 
     # Initialize the numerical and multiplier portions of the value
     numeric = ""
@@ -37,10 +37,25 @@ def generate_sort_value(component_value, library):
             if char.isdigit():  # Numbers get concatenated to the numeric string as they are read
                 numeric += char
             elif char.isalpha() and multiplier == 0:    # The first nonnumeric is interpreted as the multiplier
-                numeric += '.'
-                if 'Resistors' in library: multiplier = R_multipliers[char]
-                elif 'Capacitors' in library or 'Inductors' in library: multiplier = LC_multipliers[char]
+                if 'Resistors' in library:  # Use the R dictionary to decode multipliers (add decimal at the multiplier)
+                    if char in R_multipliers: 
+                        multiplier = R_multipliers[char]
+                        numeric += '.'
+                    else:   # Default response for badly formatted values in kicad is to return a sorting value of 0
+                        multiplier = 0
+                        numeric = '0'
+                        break
+                elif 'Capacitors' in library or 'Inductors' in library:     # Very similar to resistors, just use the LC dictionary to decode multipliers
+                    if char in LC_multipliers:
+                        multiplier = LC_multipliers[char]
+                        numeric += '.'
+                    else:   # Default response for badly formatted values in kicad is to return a sorting value of 0
+                        multiplier = 0
+                        numeric = '0'
+                        break
             else: break     # If the multiplier's been set, or the value string has ended, break from the loop (don't read in any more characters as a mulitplier)
+
+        if numeric == '.': numeric = '0'
 
         sort_value = float(numeric) * multiplier
 
@@ -73,6 +88,7 @@ def submit_new_part(bre_number, description, value, datasheet, library, manufact
         new_product_id = models.execute_kw(db, uid, password, 'product.product', 'create', [{
             'default_code': bre_number,
             'name': description,
+            'bre_description': description,
             'bre_number': bre_number,
             'component_value': value,
             'component_sort': sort_value,
