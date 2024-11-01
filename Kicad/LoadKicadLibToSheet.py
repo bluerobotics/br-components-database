@@ -47,7 +47,7 @@ null_strings = ["", " ", "-", "--", "~", "NA", "N/A"]
 
 
 os.chdir(SYMBOLS_PATH)
-for lib_file in glob.glob("BR_Capacitors_0402.kicad_sym"):
+for lib_file in glob.glob("BR_Capacitors_1206.kicad_sym"):
 
     # Extract library nickname/library -- e.g., 0402_Capacitors
     lib_nickname = lib_file.replace(".kicad_sym", "")
