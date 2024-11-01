@@ -21,6 +21,8 @@ common = xmlrpc.client.ServerProxy(f'{url}/xmlrpc/2/common')
 uid = common.authenticate(db, username, password, {})
 models = xmlrpc.client.ServerProxy(f'{url}/xmlrpc/2/object')
 
+#########################################################################################################################################
+
 def generate_sort_value(component_value, library):
     
     # Dictionaries for storing various multipliers and their values

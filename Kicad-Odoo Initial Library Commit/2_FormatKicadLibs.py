@@ -154,15 +154,18 @@ for lib_file in glob.glob("*.kicad_sym"):
     # For each symbol in a given library, populate a new row in the Parts dataframe
     for symbol in symbol_lib.symbols:
         
-        if "Connector" in library:
-            add_field_to_symbol(library, symbol.libId, "Label", '')
+        # Grab all the properties from the Kicad Symbol
+        properties = {property.key.strip(): property.value.strip() for property in symbol.properties}
+
+        if "Connector" in library and "Label" not in properties:
+            add_field_to_symbol(symbol_lib, symbol.libId, "Label", '')
             props_to_show = ["Reference", "Label"]
         else:
             props_to_show = ["Reference", "Value"]
 
         format_symbol(symbol, library)
-        sort_symbol_fields(symbol, props_to_show=props_to_show)
-        hide_attributes(symbol)
+        sort_symbol_fields(symbol)
+        hide_attributes(symbol, props_to_show=props_to_show)
 
     symbol_lib.to_file(encoding='utf-8')
 
