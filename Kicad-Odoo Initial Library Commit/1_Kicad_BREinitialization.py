@@ -1,12 +1,27 @@
 import kiutils.symbol, kiutils.items
-import random
 import os
 import glob
 import pandas as pd
 
-#### Function for generating a unique BRE Number ####
-def generate_BRE(existing_BREs):
+# Reading symbol libraries from our BR symbols folder
+SYMBOLS_PATH = r"C:/Users/JacobBrotmanKrass/Documents/Test Library/Symbols"
+current_path = os.path.dirname(os.path.abspath(__file__))
+#SYMBOLS_PATH = os.path.join(current_path, os.pardir, os.pardir, "br-kicad-lib", "Symbols")
 
+#########################################################################################################################################
+
+def generate_BRE(existing_BREs):
+    """
+    Generate a unique BRE number by counting up from 000000 and making sure the generated value is not already an existing BRE
+
+    Parameters
+    ----------
+    existing BREs (list of str): A list containing all existing BRE numbers to ensure that there are no parts incorrectly assigned to the same BRE
+
+    Returns
+    -------
+    BRE (str) : A unique string of the form BRE-xxxxxx, with the number of digits determined by the parameter num_digits in the function
+    """
     # Set number of digits in unique BRE
     num_digits = 6      
 
@@ -27,11 +42,12 @@ def add_field_to_symbol(symbol_lib, symbol_name, field_name, field_value):
     """
     Add a custom field to a KiCad symbol (.kicad_sym file) using kiutils.
 
-    Args:
-        symbol_lib (kiutils SymbolLib): symbol_lib object being read
-        symbol_name (str): The name of the symbol to modify.
-        field_name (str): The name of the field to add.
-        field_value (str): The value of the field to add.
+    Parameters
+    ----------
+    symbol_lib (kiutils SymbolLib): symbol_lib object being read
+    symbol_name (str): The name of the symbol to modify.
+    field_name (str): The name of the field to add.
+    field_value (str): The value of the field to add.
     """
 
     # Find the symbol by name
@@ -86,27 +102,20 @@ def sort_symbol_fields(symbol):
     symbol.properties = main_properties + other_properties
 
 
+#########################################################################################################################################
 
-
-# Not really necessary, but initializes the dataframes. This is at good reference for the columns, at least
-parts_df = pd.DataFrame(columns=['BRE Number','Name','Description','Value','Symbol','Footprint','Datasheet','Manufacturer','MPN', 'Library'])
-vendors_df = pd.DataFrame(columns=['BRE Number','Supplier','SPN','Stock'])
-
+# Lists to store BRE's and MPN's as they're read in and created
 BRE_list = []
 MPN_list = [] 
 
+# Lists to store rows of part and vendor information
 parts_list = []
 vendors_list = []
 
 # Ignore any thing that looks like this
 null_strings = ["", " ", "-", "--", "~", "NA", "N/A"]
 
-# Reading symbol libraries from our BR symbols folder
-# SYMBOLS_PATH = "C:/Users/JacobBrotmanKrass/Documents/GitHub/br-kicad-lib/Symbols"
-# JLC_PATH = r"C:/Users/JacobBrotmanKrass/Documents/GitHub/br-components-database/jlc-scraper/csv/Parts Inventory on JLCPCB.xlsx"
-# OUTPUT_PATH = "C:/Users/JacobBrotmanKrass/Documents/GitHub/br-components-database/Kicad"
-SYMBOLS_PATH = r"C:/Users/JacobBrotmanKrass/Documents/Test Library/Symbols"
-OUTPUT_PATH = "C:/Users/JacobBrotmanKrass/Documents"
+
 os.chdir(SYMBOLS_PATH)
 for lib_file in glob.glob("*.kicad_sym"):
 
@@ -130,8 +139,6 @@ for lib_file in glob.glob("*.kicad_sym"):
 
         # Symbol path in Kicad
         symbol_path = f"{lib_nickname}:{symbol.entryName}"
-
-
 
         # Grab all the properties from the Kicad Symbol
         properties = {property.key.strip(): property.value.strip() for property in symbol.properties}
@@ -184,16 +191,19 @@ for lib_file in glob.glob("*.kicad_sym"):
 
     symbol_lib.to_file(encoding='utf-8')
 
-# Create Pandas dataframes from these lists of dictionaries
-# Think of each dictionary as a row in the table
+""" SEND TO ODOO INSTEAD
+
+# We don't need these dataframes unless we're going to output this to excel files or something
 parts_df = pd.DataFrame(parts_list)
 vendors_df = pd.DataFrame(vendors_list)
 
 odoo_parts = parts_df[["BRE Number", "Description", "Datasheet", "Manufacturer", "MPN", "Library"]]
 
 
-""" SEND TO ODOO INSTEAD """
+
 # Save dataframes to excel files
+OUTPUT_PATH = "C:/Users/JacobBrotmanKrass/Documents"
 vendors_df.to_excel(os.path.join(OUTPUT_PATH, "Test_Vendor_Stock.xlsx"))
 parts_df.to_excel(os.path.join(OUTPUT_PATH, "Test_Parts_Library.xlsx"))    
 odoo_parts.to_excel(os.path.join(OUTPUT_PATH, "Test_Odoo_Parts.xlsx")) 
+"""

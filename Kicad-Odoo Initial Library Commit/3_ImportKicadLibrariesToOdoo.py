@@ -5,6 +5,11 @@ import glob
 import os
 import kiutils.symbol, kiutils.items
 
+
+SYMBOLS_PATH = r"C:/Users/JacobBrotmanKrass/Documents/Test Library/Symbols"
+current_path = os.path.dirname(os.path.abspath(__file__))
+#SYMBOLS_PATH = os.path.join(current_path, os.pardir, os.pardir, "br-kicad-lib", "Symbols")
+
 # Odoo connection details
 url = "https://dev2-v17.apps.bluerobotics.com/"
 db = "20241009_v2"
@@ -55,7 +60,7 @@ def generate_sort_value(component_value, library):
                         break
             else: break     # If the multiplier's been set, or the value string has ended, break from the loop (don't read in any more characters as a mulitplier)
 
-        if numeric == '.': numeric = '0'
+        if numeric == '.': numeric = '0'    # Correct for cases where shit meets fan, change a single decimal point to = 0
 
         sort_value = float(numeric) * multiplier
 
@@ -135,7 +140,22 @@ def add_vendor_info(bre_number, supplier, spn):
     }])
     
 def load_kicad_lib_as_dataframe(symbols_path):
-    
+    """
+    Load in Kicad libraries as a pandas Dataframe. This format greatly enhances the ability to compare, analyze, and update parts to another database (Odoo, for instance).
+    Also pulls in vendor information from parts.
+
+    Parameters
+    ----------
+    symbols_path (raw str) : The path to the Kicad symbol libraries
+
+    Returns
+    -------
+    parts_df (pd.DataFrame) : DataFrame containing all of the parts with the following columns:
+                              ["BRE Number", "Name", "Description", "Value", "Symbol", "Footprint",  "Datasheet", "Manufacturer", "MPN", "Library"]
+    vendords_df (pd.DataFrame) : DataFrame containing all supplier information and respective BRE numbers, containing the columns:
+                                 ["BRE Number", "Supplier", "SPN", "Stock"]
+    """
+
     os.chdir(symbols_path)
 
     parts_list = []
@@ -211,14 +231,18 @@ def load_kicad_lib_as_dataframe(symbols_path):
     
     return parts_df, vendors_df
 
+#########################################################################################################################################
 
-SYMBOLS_PATH = r"C:/Users/JacobBrotmanKrass/Documents/Test Library/Symbols"
-
+# Load in parts and vendor info from Kicad as dataframes
 full_parts_df, vendors_df = load_kicad_lib_as_dataframe(SYMBOLS_PATH)
+
+# Isolate the columns that will be pushed to Odoo (BRE, Description, Value, Datasheet, Manufacturer, MPN, and Library)
 odoo_df = full_parts_df[["BRE Number", "Description", "Value", "Datasheet", "Manufacturer", "MPN", "Library"]].copy()
+
+# Any duplicate BRE numbers need to be dropped, only the first one will be used as the holder of relevant info
 odoo_df.drop_duplicates(subset='BRE Number', inplace=True)
 
-
+# Loop through the dataframe of Odoo-ready parts and add them to Odoo along with their respective vendor information
 for idx, row in odoo_df.iterrows():
     submit_new_part(row["BRE Number"], row["Description"], row["Value"], row["Datasheet"], row["Library"], row["Manufacturer"], row["MPN"])
     print(row["BRE Number"])
