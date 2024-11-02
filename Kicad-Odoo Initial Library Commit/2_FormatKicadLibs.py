@@ -15,13 +15,12 @@ def format_symbol(symbol, library):
             if property.key == "Reference":
                 property.position = Position(X=to_mm(40), Y=to_mm(70), angle=0)
                 property.effects.justify = Justify(horizontally = "left")
-                print(property.effects.justify)
             elif property.key == "Value":
                 property.position = Position(X=to_mm(40), Y=to_mm(-70), angle=0)  
                 property.effects.justify = Justify(horizontally="left")
             else:
                 property.position = Position(X=to_mm(0), Y=y, angle=0)  
-                property.effects.justify = Justify(horizontally=None)
+                property.effects.justify = Justify(horizontally="left")
                 y -= to_mm(100)  
 
     elif 'Resistor' in library:
@@ -30,13 +29,13 @@ def format_symbol(symbol, library):
             if property.key == "Reference":
                 property.position = Position(X=to_mm(60), Y=to_mm(50), angle=0)
                 property.effects.justify = Justify(horizontally = "left")
-                print(property.effects.justify)
+
             elif property.key == "Value":
                 property.position = Position(X=to_mm(60), Y=to_mm(-50), angle=0)  
                 property.effects.justify = Justify(horizontally="left")
             else:
                 property.position = Position(X=to_mm(0), Y=y, angle=0)  
-                property.effects.justify = Justify(horizontally=None)
+                property.effects.justify = Justify(horizontally="left")
                 y -= to_mm(100)
 
     elif 'Connector' in library:
@@ -48,7 +47,7 @@ def format_symbol(symbol, library):
                 pass
             else:
                 property.position = Position(X=to_mm(0), Y=y, angle=0)  
-                property.effects.justify = Justify(horizontally=None)
+                property.effects.justify = Justify(horizontally="left")
                 y -= to_mm(100)        
 
     else:
@@ -60,7 +59,7 @@ def format_symbol(symbol, library):
                 pass
             else:
                 property.position = Position(X=to_mm(0), Y=y, angle=0)  
-                property.effects.justify = Justify(horizontally=None)
+                property.effects.justify = Justify(horizontally="left")
                 y -= to_mm(100)                                            
 
 def to_mm(mils):
@@ -89,7 +88,7 @@ def add_field_to_symbol(symbol_lib, symbol_name, field_name, field_value):
         raise ValueError(f'Symbol "{symbol_name}" not found in the library.')
 
     # Create the new field using kiutils' built-in property structure
-    new_field = kiutils.symbol.Property(key=field_name, value=field_value, effects=kiutils.items.common.Effects(font=kiutils.items.common.Font(face=None, height=1.27, width=1.27, thickness=None, bold=False, italic=False, lineSpacing=None, color=None), justify=Justify(horizontally='None', vertically=None, mirror=False), hide=True, href=None), showName=False)
+    new_field = kiutils.symbol.Property(key=field_name, value=field_value, effects=kiutils.items.common.Effects(font=kiutils.items.common.Font(face=None, height=1.27, width=1.27, thickness=None, bold=False, italic=False, lineSpacing=None, color=None), justify=Justify(horizontally='left', vertically=None, mirror=False), hide=True, href=None), showName=False)
 
     # Add the new field to the symbol's properties
     symbol.properties.append(new_field)
@@ -102,6 +101,7 @@ def hide_attributes(symbol, props_to_show=["Reference", "Value"]):
     for prop in symbol.properties:
         if prop.key not in props_to_show:
             prop.effects.hide = True
+        else: prop.effects.hide = False
 
 def sort_symbol_fields(symbol):
     """
@@ -157,8 +157,9 @@ for lib_file in glob.glob("*.kicad_sym"):
         # Grab all the properties from the Kicad Symbol
         properties = {property.key.strip(): property.value.strip() for property in symbol.properties}
 
-        if "Connector" in library and "Label" not in properties:
-            add_field_to_symbol(symbol_lib, symbol.libId, "Label", '')
+        if "Connector" in library:
+            if "Label" not in properties:
+                add_field_to_symbol(symbol_lib, symbol.libId, "Label", 'LABEL')
             props_to_show = ["Reference", "Label"]
         else:
             props_to_show = ["Reference", "Value"]

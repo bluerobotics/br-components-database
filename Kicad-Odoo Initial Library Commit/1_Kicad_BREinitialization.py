@@ -115,7 +115,7 @@ vendors_list = []
 # Ignore any thing that looks like this
 null_strings = ["", " ", "-", "--", "~", "NA", "N/A"]
 
-
+# Go through each symbol library located in SYMBOLS_PATH
 os.chdir(SYMBOLS_PATH)
 for lib_file in glob.glob("*.kicad_sym"):
 
