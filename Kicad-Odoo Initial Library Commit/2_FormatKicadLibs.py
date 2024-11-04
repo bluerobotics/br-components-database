@@ -38,18 +38,6 @@ def format_symbol(symbol, library):
                 property.effects.justify = Justify(horizontally="left")
                 y -= to_mm(100)
 
-    elif 'Connector' in library:
-        y = to_mm(3000)
-        for property in symbol.properties:
-            if property.key == "Reference":
-                pass
-            elif property.key == "Label":
-                pass
-            else:
-                property.position = Position(X=to_mm(0), Y=y, angle=0)  
-                property.effects.justify = Justify(horizontally="left")
-                y -= to_mm(100)        
-
     else:
         y = to_mm(3000)
         for property in symbol.properties:
@@ -157,16 +145,9 @@ for lib_file in glob.glob("*.kicad_sym"):
         # Grab all the properties from the Kicad Symbol
         properties = {property.key.strip(): property.value.strip() for property in symbol.properties}
 
-        if "Connector" in library:
-            if "Label" not in properties:
-                add_field_to_symbol(symbol_lib, symbol.libId, "Label", 'LABEL')
-            props_to_show = ["Reference", "Label"]
-        else:
-            props_to_show = ["Reference", "Value"]
-
         format_symbol(symbol, library)
         sort_symbol_fields(symbol)
-        hide_attributes(symbol, props_to_show=props_to_show)
+        hide_attributes(symbol)
 
     symbol_lib.to_file(encoding='utf-8')
 
