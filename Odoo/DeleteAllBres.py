@@ -1,3 +1,9 @@
+"""
+USE WITH CAUTION
+A utility to delete all parts with BRE numbers from Odoo. There's no undoing this. Really just for prototyping, this should never be used in normal workflow.
+"""
+
+
 import xmlrpc.client
 
 # Odoo connection details

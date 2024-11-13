@@ -1,12 +1,17 @@
+"""
+Step 1 of the initial Kicad library initialization into Odoo
+Assign a unique BRE Number to each physical component in the BR Kicad libraries. 
+"""
+
 import kiutils.symbol, kiutils.items
 import os
 import glob
 import pandas as pd
 
 # Reading symbol libraries from our BR symbols folder
-SYMBOLS_PATH = r"C:/Users/JacobBrotmanKrass/Documents/Test Library/Symbols"
+#SYMBOLS_PATH = r"C:/Users/JacobBrotmanKrass/Documents/Test Library/Symbols"
 current_path = os.path.dirname(os.path.abspath(__file__))
-#SYMBOLS_PATH = os.path.join(current_path, os.pardir, os.pardir, "br-kicad-lib", "Symbols")
+SYMBOLS_PATH = os.path.join(current_path, os.pardir, os.pardir, "br-kicad-lib", "Symbols")
 
 #########################################################################################################################################
 

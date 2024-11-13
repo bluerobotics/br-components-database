@@ -1,11 +1,16 @@
+"""
+Step 2 of the initial Kicad library initialization into Odoo
+Clean up the initial formatting of Kicad symbols. This especially deals with capacitors and resistors. Organizes all default fields in the symbol
+"""
+
 from kiutils.items.common import Position, Justify
 import kiutils.symbol
 import os
 import glob
 
-SYMBOLS_PATH = r"C:/Users/JacobBrotmanKrass/Documents/Test Library/Symbols"
+#SYMBOLS_PATH = r"C:/Users/JacobBrotmanKrass/Documents/Test Library/Symbols"
 current_path = os.path.dirname(os.path.abspath(__file__))
-#SYMBOLS_PATH = os.path.join(current_path, os.pardir, os.pardir, "br-kicad-lib", "Symbols")
+SYMBOLS_PATH = os.path.join(current_path, os.pardir, os.pardir, "br-kicad-lib", "Symbols")
 
 def format_symbol(symbol, library):
     

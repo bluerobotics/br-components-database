@@ -1,3 +1,8 @@
+"""
+JLC Stock Scraper
+Grabs BR inventory from JLCPCB, downloads it as a spreasheet, and is used to update the respective fields in the Odoo Purchasing tab.
+"""
+
 import subprocess
 import os
 import pandas as pd

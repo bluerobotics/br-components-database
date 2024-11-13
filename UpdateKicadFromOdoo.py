@@ -22,6 +22,8 @@ uid = common.authenticate(db, username, password, {})
 models = xmlrpc.client.ServerProxy(f'{url}/xmlrpc/2/object')
 print("Connected.")
 
+#########################################################################################################################################
+
 def load_odoo_as_df():
     """
     Load in BRE parts from Odoo as a pandas Dataframe. This format greatly enhances the ability to compare, analyze, and update parts to the Kicad library.
@@ -198,6 +200,7 @@ def save_df_to_kicad_lib(updated_parts, symbols_path):
                 # Grab all the properties from the Kicad Symbol
                 properties_dict = {property.key.strip(): property.value.strip() for property in symbol.properties}
 
+                # Edit only parts with BRE Numbers that have been flagged for updates
                 if 'BRE Number' in properties_dict and properties_dict['BRE Number'] in updated_parts.index.to_list():
                     print(f"Updating {properties_dict['BRE Number']}")
                     
@@ -206,6 +209,7 @@ def save_df_to_kicad_lib(updated_parts, symbols_path):
                     if 'Manufacturer Part Num' not in properties_dict:  # Add Manufacturer Part Num field to Kicad symbol if it doesn't already exist
                         add_field_to_symbol(symbol_lib, symbol.libId, "Manufacturer Part Num", "")
 
+                    # Update all relevant fields (we want to leave other fields untouched)
                     updated_part = updated_parts.loc[properties_dict['BRE Number']]
                     for property in symbol.properties:
                         if property.key == 'Description':
@@ -219,10 +223,11 @@ def save_df_to_kicad_lib(updated_parts, symbols_path):
                         if property.key == 'Manufacturer Part Num':
                             property.value = updated_part['MPN']
 
+                    # Make sure the 'library' field in Odoo is updated; this is the only information passed back to Odoo
                     update_library_field_in_odoo(properties_dict['BRE Number'], library)
                 
                 sort_symbol_fields(symbol)
-                hide_attributes(symbol)
+                hide_attributes(symbol, props_to_show=['Reference', 'Value'])
 
         symbol_lib.to_file(encoding='utf-8')
 
@@ -259,17 +264,19 @@ def add_field_to_symbol(symbol_lib, symbol_name, field_name, field_value):
     # Save the modified symbol back to the file
     print(f'Field "{field_name}" with value "{field_value}" added to symbol "{symbol_name}".')
 
-def hide_attributes(symbol):
+def hide_attributes(symbol, props_to_show=["Reference", "Value"]):
     """
     Quick fix to hide all symbol properties besides Reference and Value. This is to patch Kiutils seeming inability to handle the hide attribute (sets everything to be visible...)
 
     Parameters
     ----------
     symbol (kiutils symbol) : A symbol object containing all property fields and other attributes
+    props_to_show (list of str) : Defaults to ["Reference", "Value"], indicates which properties to set visible (all else will be hidden)
     """
     for prop in symbol.properties:
-        if prop.key != "Reference" and prop.key != "Value":
+        if prop.key not in props_to_show:
             prop.effects.hide = True
+        else: prop.effects.hide = False
 
 def sort_symbol_fields(symbol):
     """

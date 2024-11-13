@@ -1,3 +1,7 @@
+"""
+A utility to export Kicad libraries to a spreadsheet for more convenient viewing. You can specifiy which libraries to view in the glob.glob()
+"""
+
 import kiutils.symbol, kiutils.items
 import os
 import glob

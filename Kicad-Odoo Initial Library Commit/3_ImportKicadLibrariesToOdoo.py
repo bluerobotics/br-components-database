@@ -1,3 +1,8 @@
+"""
+Step 3 of the initial Kicad library initialization into Odoo
+Import all Kicad libaries into Odoo with all of the part metadata and vendor info that currently lives in Kicad fields. Only adds parts with BRE Numbers.
+"""
+
 import xmlrpc.client
 import traceback
 import pandas as pd
@@ -6,9 +11,9 @@ import os
 import kiutils.symbol, kiutils.items
 
 
-SYMBOLS_PATH = r"C:/Users/JacobBrotmanKrass/Documents/Test Library/Symbols"
+#SYMBOLS_PATH = r"C:/Users/JacobBrotmanKrass/Documents/Test Library/Symbols"
 current_path = os.path.dirname(os.path.abspath(__file__))
-#SYMBOLS_PATH = os.path.join(current_path, os.pardir, os.pardir, "br-kicad-lib", "Symbols")
+SYMBOLS_PATH = os.path.join(current_path, os.pardir, os.pardir, "br-kicad-lib", "Symbols")
 
 # Odoo connection details
 url = "https://dev2-v17.apps.bluerobotics.com/"
