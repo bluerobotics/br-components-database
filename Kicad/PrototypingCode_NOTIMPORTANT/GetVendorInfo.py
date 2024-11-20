@@ -38,6 +38,11 @@ def getVendorInfo(bre_number):
 
     return JLC_info
 
-bre_number = 'BRE-000000'
-JLC_info = getVendorInfo(bre_number)
-print(JLC_info)
+all_suppliers = models.execute_kw(
+    db, uid, password, 'product.supplierinfo', 'search_read',
+    [[]],  # Empty domain to fetch all records
+    {'fields': ['id', 'product_id', 'partner_id', 'min_qty', 'price']}
+)
+for supplier in all_suppliers:
+    #if supplier['partner_id'][1] == 'JLCPCB':
+    print(f"All Supplier Info: {supplier}")
