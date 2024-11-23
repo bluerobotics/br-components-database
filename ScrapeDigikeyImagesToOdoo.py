@@ -216,8 +216,10 @@ def load_odoo_vendors_as_df():
 
     return supplierinfo_ids, odoo_vendors_df
 
+root_folder = os.path.dirname(os.path.abspath(__file__))  # Get the script's root directory
+token_filepath = os.path.join(root_folder, 'digikey_token.json')
 #get_access_token(code, token_filename)
-token = load_token_from_file('digikey_token.json')
+token = load_token_from_file(token_filepath)
 print(token)
 
 #time.sleep(0.5)

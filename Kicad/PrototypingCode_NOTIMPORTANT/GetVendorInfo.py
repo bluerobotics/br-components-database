@@ -41,8 +41,17 @@ def getVendorInfo(bre_number):
 all_suppliers = models.execute_kw(
     db, uid, password, 'product.supplierinfo', 'search_read',
     [[]],  # Empty domain to fetch all records
-    {'fields': ['id', 'product_id', 'partner_id', 'min_qty', 'price']}
+    {'fields': ['id', 'product_id', 'product_tmpl_id', 'partner_id', 'min_qty', 'price']}
 )
+
+prod = 0
+no_prod = 0
 for supplier in all_suppliers:
     #if supplier['partner_id'][1] == 'JLCPCB':
-    print(f"All Supplier Info: {supplier}")
+    if supplier['product_tmpl_id'] == False:
+        no_prod += 1
+    else:
+        prod += 1
+    #print(f"All Supplier Info: {supplier}")
+
+print(prod, no_prod)

@@ -56,7 +56,7 @@ def format_symbol(symbol, library):
                 y -= to_mm(100)                                            
 
 def to_mm(mils):
-    return mils * 0.0254
+    return float(mils * 0.0254)
 
 def add_field_to_symbol(symbol_lib, symbol_name, field_name, field_value):
     """
