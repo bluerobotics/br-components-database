@@ -1,11 +1,15 @@
+"""
+A utility to export Kicad libraries to a spreadsheet for more convenient viewing. You can specifiy which libraries to view in the glob.glob()
+"""
+
 import kiutils.symbol, kiutils.items
 import os
 import glob
 import pandas as pd
 
 # SET TO YOUR DESIRED PATHS ################################################################################
-SYMBOLS_PATH = r"C:\Users\emill\Documents\GitHub\br-kicad-lib\Symbols"
-OUTPUT_PATH = r"C:\Users\emill\Documents\GitHub\br-kicad-lib\Symbols"
+SYMBOLS_PATH = r"C:\Users\JacobBrotmanKrass\Documents\GitHub\br-kicad-lib\Symbols"
+OUTPUT_PATH = r"C:\Users\JacobBrotmanKrass\Documents\GitHub\br-kicad-lib\Symbols"
 
 def hide_attributes(symbol):
 
@@ -47,7 +51,7 @@ null_strings = ["", " ", "-", "--", "~", "NA", "N/A"]
 
 
 os.chdir(SYMBOLS_PATH)
-for lib_file in glob.glob("BR_Capacitors_1206.kicad_sym"):
+for lib_file in glob.glob("BR_Resistors*.kicad_sym"):
 
     # Extract library nickname/library -- e.g., 0402_Capacitors
     lib_nickname = lib_file.replace(".kicad_sym", "")
@@ -85,4 +89,4 @@ for lib_file in glob.glob("BR_Capacitors_1206.kicad_sym"):
 parts_df = pd.DataFrame(parts_list)
 
 # Save dataframes to excel files
-parts_df.to_excel(os.path.join(OUTPUT_PATH, "Test_Parts_Library.xlsx"))    
+parts_df.to_excel(os.path.join(OUTPUT_PATH, "Resistors_Library.xlsx"))    

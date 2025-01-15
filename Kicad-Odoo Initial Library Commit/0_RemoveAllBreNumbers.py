@@ -1,9 +1,19 @@
+"""
+Remove BRE Fields From Kicad
+Step 0 of the initial Kicad library initialization into Odoo
+Removes all BRE Number fields from Kicad. Basically undoes any previous BRE initialization in Kicad. 
+"""
+
 import kiutils.symbol, kiutils.items
-import random
 import os
 import glob
 import pandas as pd
 
+#SYMBOLS_PATH = r"C:/Users/JacobBrotmanKrass/Documents/Test Library/Symbols"
+current_path = os.path.dirname(os.path.abspath(__file__))
+SYMBOLS_PATH = os.path.join(current_path, os.pardir, os.pardir, "br-kicad-lib", "Symbols")
+
+#########################################################################################################################################
 
 def add_field_to_symbol(symbol_lib, symbol_name, field_name, field_value):
     """
@@ -42,7 +52,7 @@ def hide_attributes(symbol):
         if prop.key != "Reference" and prop.key != "Value":
             prop.effects.hide = True
 
-SYMBOLS_PATH = r"C:/Users/JacobBrotmanKrass/Documents/Test Library/Symbols"
+#########################################################################################################################################
 
 os.chdir(SYMBOLS_PATH)
 for lib_file in glob.glob("*.kicad_sym"):
@@ -63,6 +73,7 @@ for lib_file in glob.glob("*.kicad_sym"):
     category = lib_nickname[3:]
 
     print("Removing old BRE Numbers and removing leading/trailing spaces from fields...")
+
     # For each symbol in a given library, populate a new row in the Parts dataframe
     for symbol in symbol_lib.symbols:
 
@@ -73,7 +84,6 @@ for lib_file in glob.glob("*.kicad_sym"):
 
             if property.key[:5] == "BR ID" or property.key[:10] == "BRE Number":
                 symbol.properties.remove(property)
-
 
         hide_attributes(symbol)
 

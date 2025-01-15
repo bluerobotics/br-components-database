@@ -1,3 +1,9 @@
+"""
+USE WITH CAUTION
+A utility to delete all parts with BRE numbers from Odoo. There's no undoing this. Really just for prototyping, this should never be used in normal workflow.
+"""
+
+
 import xmlrpc.client
 
 # Odoo connection details
@@ -15,7 +21,7 @@ print("Connected.")
 
 
 # Define the prefix you want to search for
-default_code_prefix = "BRE-"  # Replace with the actual prefix you're searching for
+default_code_prefix = "BRE-" 
 
 # Search for products whose default_code starts with the given prefix using 'ilike'
 product_ids = models.execute_kw(db, uid, password, 'product.product', 'search', [[['default_code', 'ilike', f"{default_code_prefix}%"]]])

@@ -7,6 +7,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium import webdriver
 import os
 import time
+import random
 
 # Set up the path to the ChromeDriver executable
 root_folder = os.path.dirname(os.path.abspath(__file__))  # Get the script's root directory
@@ -33,6 +34,10 @@ if os.path.exists(downloaded_file_path):
 
 # Set up Chrome options to specify the download folder
 options = webdriver.ChromeOptions()
+#####
+options.add_experimental_option("excludeSwitches", ["enable-automation"])
+options.add_experimental_option("useAutomationExtension", False)
+#####
 prefs = {
     "download.default_directory": download_folder,  # Set the default download directory
     "download.prompt_for_download": False,  # Disable download prompt
@@ -64,7 +69,7 @@ try:
 
     # Refresh the page to apply cookies and check if already logged in
     driver.refresh()
-    time.sleep(2)  # Wait for 2 seconds to refresh
+    time.sleep(random.randint(10,30)/10)  # Wait for 2 seconds to refresh
 
     # Hover over the element to trigger the "Sign in" button appearance
     try:
@@ -77,7 +82,7 @@ try:
         print("Hovered over the trigger element successfully.")
 
         # Wait for 2 seconds to allow the "Sign in" button to become clickable
-        time.sleep(2)
+        time.sleep(random.randint(10,30)/10)
 
         # Locate the "Sign in" button using the full XPath
         sign_in_button = driver.find_element(By.XPATH, "/html/body/div[1]/div/div/nav/div/div[2]/span[2]/div/div[1]/button")
@@ -88,6 +93,8 @@ try:
     except Exception as e:
         print(f"Failed to hover and click the Sign in button: {e}")
 
+    time.sleep(2)
+    
     # Save cookies after clicking the sign-in button, if needed
     new_cookies = driver.get_cookies()
     with open(cookies_file, "wb") as file:
@@ -131,7 +138,7 @@ try:
         print(f"Failed to click the second button: {e}")
 
     # Wait for the download to complete
-    time.sleep(2)
+    time.sleep(random.randint(10,30)/10)
 
     # Check if the file was downloaded successfully
     if os.path.exists(downloaded_file_path):
@@ -140,7 +147,7 @@ try:
         print(f"File '{downloaded_file_name}' was not downloaded.")
 
     # Wait for 2 seconds to allow for visual verification
-    time.sleep(2)
+    time.sleep(random.randint(10,30)/10)
 
 finally:
     # Close the browser

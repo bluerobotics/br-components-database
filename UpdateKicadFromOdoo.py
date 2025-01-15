@@ -5,9 +5,9 @@ import pandas as pd
 import xmlrpc.client
 
 # Reading symbol libraries from our BR symbols folder
-# SYMBOLS_PATH = "C:/Users/JacobBrotmanKrass/Documents/GitHub/br-kicad-lib/Symbols"
-SYMBOLS_PATH = r"C:/Users/JacobBrotmanKrass/Documents/Test Library/Symbols"
-
+SYMBOLS_PATH = r"C:/Users/JacobBrotmanKrass/Documents/Test Library/Symbols" # TEST LIBRARY
+scripts_path = os.path.dirname(os.path.abspath(__file__))
+#SYMBOLS_PATH = os.path.join(scripts_path, os.pardir, "Symbols")
 
 # Odoo connection details
 url = "https://dev2-v17.apps.bluerobotics.com/"
@@ -22,7 +22,18 @@ uid = common.authenticate(db, username, password, {})
 models = xmlrpc.client.ServerProxy(f'{url}/xmlrpc/2/object')
 print("Connected.")
 
+#########################################################################################################################################
+
 def load_odoo_as_df():
+    """
+    Load in BRE parts from Odoo as a pandas Dataframe. This format greatly enhances the ability to compare, analyze, and update parts to the Kicad library.
+    All Odoo access should be handled outside of the function to reduce redundancy, as all Odoo functions rely on the connection
+
+    Returns
+    -------
+    parts_df (pd.DataFrame) : DataFrame containing all of the parts with the following columns:
+                              ["BRE Number", "Name", "Description", "Value", "Symbol", "Footprint",  "Datasheet", "Manufacturer", "MPN", "Library"]
+    """
 
     print("Gathering all BRE parts from Odoo...")
     
@@ -48,11 +59,27 @@ def load_odoo_as_df():
 
     print("All BRE parts loaded successfully.")
 
-    odoo_df = pd.DataFrame(odoo_parts_list)
+    odoo_df = pd.DataFrame(odoo_parts_list).replace(to_replace={False:''})
+
     return odoo_df
 
 def load_kicad_lib_as_dataframe(symbols_path):
-    
+    """
+    Load in Kicad libraries as a pandas Dataframe. This format greatly enhances the ability to compare, analyze, and update parts to another database (Odoo, for instance).
+    Also pulls in vendor information from parts.
+
+    Parameters
+    ----------
+    symbols_path (raw str) : The path to the Kicad symbol libraries
+
+    Returns
+    -------
+    parts_df (pd.DataFrame) : DataFrame containing all of the parts with the following columns:
+                              ["BRE Number", "Name", "Description", "Value", "Symbol", "Footprint",  "Datasheet", "Manufacturer", "MPN", "Library"]
+    vendords_df (pd.DataFrame) : DataFrame containing all supplier information and respective BRE numbers, containing the columns:
+                                 ["BRE Number", "Supplier", "SPN", "Stock"]
+    """
+
     os.chdir(symbols_path)
 
     parts_list = []
@@ -131,10 +158,20 @@ def load_kicad_lib_as_dataframe(symbols_path):
     return parts_df, vendors_df
 
 def save_df_to_kicad_lib(updated_parts, symbols_path):
+    """
+    Use a DataFrame of the updated parts to actually push these updates into their specific Kicad libraries and save the library. 
+    By only taking in the updated parts, we can push changes only the libraries that have edits to be made, preventing each change 
+    from requiring modification of every BR library.
+
+    Parameters
+    ----------
+    updated_parts (pd.DataFrame) : A DataFrame containing updated fields for any Kicad parts that had discrepancies with its respective Odoo part
+    symbols_path (raw str) : The path to the Kicad symbol libraries
+    """
 
     os.chdir(symbols_path)
 
-    print("Loading in libraries from Kicad...")
+    print(f"Updating the following parts: {updated_parts}")
 
     for lib_file in glob.glob("*.kicad_sym"):
 
@@ -163,6 +200,7 @@ def save_df_to_kicad_lib(updated_parts, symbols_path):
                 # Grab all the properties from the Kicad Symbol
                 properties_dict = {property.key.strip(): property.value.strip() for property in symbol.properties}
 
+                # Edit only parts with BRE Numbers that have been flagged for updates
                 if 'BRE Number' in properties_dict and properties_dict['BRE Number'] in updated_parts.index.to_list():
                     print(f"Updating {properties_dict['BRE Number']}")
                     
@@ -171,6 +209,7 @@ def save_df_to_kicad_lib(updated_parts, symbols_path):
                     if 'Manufacturer Part Num' not in properties_dict:  # Add Manufacturer Part Num field to Kicad symbol if it doesn't already exist
                         add_field_to_symbol(symbol_lib, symbol.libId, "Manufacturer Part Num", "")
 
+                    # Update all relevant fields (we want to leave other fields untouched)
                     updated_part = updated_parts.loc[properties_dict['BRE Number']]
                     for property in symbol.properties:
                         if property.key == 'Description':
@@ -183,9 +222,12 @@ def save_df_to_kicad_lib(updated_parts, symbols_path):
                             property.value = updated_part['Manufacturer']
                         if property.key == 'Manufacturer Part Num':
                             property.value = updated_part['MPN']
+
+                    # Make sure the 'library' field in Odoo is updated; this is the only information passed back to Odoo
+                    update_library_field_in_odoo(properties_dict['BRE Number'], library)
                 
                 sort_symbol_fields(symbol)
-                hide_attributes(symbol)
+                hide_attributes(symbol, props_to_show=['Reference', 'Value'])
 
         symbol_lib.to_file(encoding='utf-8')
 
@@ -222,11 +264,19 @@ def add_field_to_symbol(symbol_lib, symbol_name, field_name, field_value):
     # Save the modified symbol back to the file
     print(f'Field "{field_name}" with value "{field_value}" added to symbol "{symbol_name}".')
 
-def hide_attributes(symbol):
+def hide_attributes(symbol, props_to_show=["Reference", "Value"]):
+    """
+    Quick fix to hide all symbol properties besides Reference and Value. This is to patch Kiutils seeming inability to handle the hide attribute (sets everything to be visible...)
 
+    Parameters
+    ----------
+    symbol (kiutils symbol) : A symbol object containing all property fields and other attributes
+    props_to_show (list of str) : Defaults to ["Reference", "Value"], indicates which properties to set visible (all else will be hidden)
+    """
     for prop in symbol.properties:
-        if prop.key != "Reference" and prop.key != "Value":
+        if prop.key not in props_to_show:
             prop.effects.hide = True
+        else: prop.effects.hide = False
 
 def sort_symbol_fields(symbol):
     """
@@ -234,42 +284,92 @@ def sort_symbol_fields(symbol):
 
     Parameters
     ----------
-    symbol (kiutils symbol) : A symbol containing all of the 
+    symbol (kiutils symbol) : A symbol containing all property fields and other attributes
     """
     
     # This is the default order
     main_fields = ['Reference', 'Value', 'Footprint', 'Datasheet', 'Manufacturer', 'Manufacturer Part Num', 'BRE Number']
     
+    # Create a list of main properties in the order that main_fields is laid out above
     main_properties = []
     for field in main_fields:
         for prop in symbol.properties:
             if prop.key == field:
                 main_properties.append(prop)
 
+    # Double check to make sure all required fields are present
     if len(main_properties) < len(main_fields):
         raise ValueError(f'Symbol "{symbol.libId}" does not contain all of the required fields: {main_fields}.')
     
+    # Toss in the remaining properties. These can be custom fields, they don't really matter, they'll just be added in the order they appear
     other_properties = [prop for prop in symbol.properties if prop.key not in main_fields]
 
     symbol.properties = main_properties + other_properties
 
+def update_library_field_in_odoo(bre_number, library):
+    """
+    Update the library field in Odoo from Kicad, as this information is stored directly in the Kicad library structure. This is really the only info coming from Kicad to Odoo.
 
+    Parameters
+    ----------
+    bre_number (str) : A string of the form BRE-xxxxxx, indicates which part to update in Odoo
+    library (str) : The name of the library to fill the field in Odoo
+    """
 
+    print("Updating library field in Odoo...")
+    product_id = models.execute_kw(db, uid, password, 'product.product', 'search', [[['default_code', '=', bre_number]]])
+    models.execute_kw(db, uid, password, 'product.product', 'write', [product_id, {'library': library}])
 
+def duplicate_handling(kicad_df):
+    """
+    Handle Kicad parts that share the same BRE number. We need to make sure that any discrepancies that are synced from Odoo are detected.
+    This is necessary because the df.compare method requires duplicates to be removed. 
+    duplicate_handling() modifies the field of the FIRST of the duplicates to say "CHANGE" in the description, marking that BRE for update, even if it's one of the other duplicates that has the discrepancy
 
+    Parameters
+    ----------
+    kicad_df (pd.DataFrame) : A DataFrame of Kicad library parts
+    """
+    # Isolate parts that share BR numbers and group by BRE number
+    for bre, group in kicad_df[kicad_df.duplicated(subset="BRE Number", keep=False)].groupby("BRE Number"):
+
+        # We only care about the columns that show up in Odoo
+        group = group[["BRE Number", "Description", "Value", "Datasheet", "Manufacturer", "MPN"]]
+
+        # Loop through and detect any differences between the first part and subsequent BRE duplicates
+        for idx, row in group.iterrows():
+            difference_indicator = (~(group.iloc[0]==row)).sum()
+
+            # If differences are detected, change the first part's Description field to "CHANGE"
+            if difference_indicator > 0:    
+                print(f"Differences discovered between Kicad parts labelled {bre}, marking to update all from Odoo...")
+                kicad_df.loc[group.index[0], "Description"] = "CHANGE"
+
+#########################################################################################################################################
+
+# Load in Odoo parts as a pandas DataFrame
 odoo_df = load_odoo_as_df()
+
+# Load in Kicad parts as a dataframe (we won't actually be using vendor info from Kicad)
 kicad_df, vendors_df = load_kicad_lib_as_dataframe(SYMBOLS_PATH)
 
-# We have to make sure there are no duplicate BRE numbers before updating the library--the process is one-to-one
-# It's set to keep the last of the duplicates, as that one seems to be the most likely to be different than the Odoo part
-# This is imperfect, but it's a pretty distant edge case 
-kicad_df.drop_duplicates(subset="BRE Number", keep='last', inplace=True)
+# We have to make sure there are no duplicate BRE numbers before updating the Kicad library--the process is one-to-one
+# Detect any discrepancies between the duplicates before removing them
+duplicate_handling(kicad_df)
+kicad_df.drop_duplicates(subset="BRE Number", keep='first', inplace=True)
+
+# Set and sort DataFrame index as BRE Number
 kicad_df.set_index("BRE Number", inplace=True)
 kicad_df.sort_index(inplace=True)
 
+# Drop any duplicate BRE columns just in case (very unlikely in Odoo)
 odoo_df.drop_duplicates(subset="BRE Number", inplace=True)
+
+# Set and sort DataFrame index as BRE Number
 odoo_df.set_index("BRE Number", inplace=True)
 odoo_df.sort_index(inplace=True)
+
+# Drop the library column from the Odoo dataframe; Kicad has no use for this field (Odoo actually gets this info from Kicad)
 odoo_df.drop(columns=['Library'], inplace=True)
 
 kicad_old = kicad_df.copy()
@@ -280,7 +380,15 @@ kicad_df.update(odoo_df)
 # Compares the updated Kicad dataframe to the old one to determine what parts need to be updated in the library (efficiency!)
 changes = kicad_df.compare(kicad_old, result_names=("new", "old"))
 
+# If there are no changes, we're all good to quit the program
+if changes.empty: 
+    print("Kicad libraries already up to date!")
+    quit()
+
+print(changes)
+
 # Focus on just the updated parts
 updated_parts = kicad_df.loc[changes.index]
 
+# Push these changes to the kicad library
 save_df_to_kicad_lib(updated_parts, SYMBOLS_PATH)

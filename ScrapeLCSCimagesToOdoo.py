@@ -1,3 +1,9 @@
+"""
+LCSC Image Scraper
+Grabs images of products with JLC numbers by going to the LCSC website, navigating to the part, downloading the image, and uploading it to the Odoo part.
+These images are less impressive than DigiKeys, so best used to just fill in the blanks.
+"""
+
 from selenium import webdriver
 from bs4 import BeautifulSoup
 import re

@@ -1,4 +1,9 @@
 """
+Digikey Image Scraper
+Grabs images from DigiKey by accessing the DigiKey API, searching each part, downloading the image, and adding it to the Odoo part.
+"""
+
+"""
 client_id = "xc0ktW7Fap5V4EkA0IvI076C9nvVlecH"
 redirect_uri = "https://localhost"  # Or a custom callback URL
 
@@ -7,8 +12,6 @@ print("Go to this URL in your browser to authorize:", auth_url)
 https://api.digikey.com/v1/oauth2/authorize?response_type=code&client_id=xc0ktW7Fap5V4EkA0IvI076C9nvVlecH&redirect_uri=https://localhost
 
 """
-
-
 
 import requests
 import json
@@ -213,8 +216,10 @@ def load_odoo_vendors_as_df():
 
     return supplierinfo_ids, odoo_vendors_df
 
+root_folder = os.path.dirname(os.path.abspath(__file__))  # Get the script's root directory
+token_filepath = os.path.join(root_folder, 'digikey_token.json')
 #get_access_token(code, token_filename)
-token = load_token_from_file('digikey_token.json')
+token = load_token_from_file(token_filepath)
 print(token)
 
 #time.sleep(0.5)
@@ -226,7 +231,7 @@ print(token_refreshed)
 
 
 # If an image already exists, determines if it gets overwritten
-OVERWRITE_OK = True 
+OVERWRITE_OK = False
 
 supplierinfo_ids, odoo_vendors_df = load_odoo_vendors_as_df()
 
