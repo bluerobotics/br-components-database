@@ -56,6 +56,7 @@
         <field name="inherit_id" ref="product.product_supplierinfo_tree_view"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='product_code']" position="after">
+                <field name="vendor_comment" string="Comment" groups="base.group_multi_company"/>
                 <field name="jlcpcb_inventory" string="JLCPCB Inventory" groups="base.group_multi_company"/>
                 <field name="global_sourcing_inventory" string="Global Sourcing Inventory" groups="base.group_multi_company"/>
                 <field name="consigned_inventory" string="Consigned Inventory" groups="base.group_multi_company"/>
