@@ -93,18 +93,21 @@
 
     <!-- Add MPN to the search in Odoo -->
     <record id="view_product_template_search_custom" model="ir.ui.view">
-        <field name="name">product.template.search.inherit.mpn</field>
+        <field name="name">product.template.search.include.mfginfo</field>
         <field name="model">product.template</field>
-        <field name="inherit_id" ref="product.product_template_search_view"/>
+        <field name="inherit_id" ref="stock.product_template_search_form_view_stock"/>
         <field name="arch" type="xml">
-            <!-- Add MPN field after the name search field -->
-            <xpath expr="//field[@name='name']" position="after">
-                <field name="mpn" string="MPN" filter_domain="[('mpn', 'ilike', self)]"/>
-            </xpath>
-
-            <!-- Add group-by for MPN inside the group tag -->
-            <xpath expr="//group" position="inside">
-                <filter string="MPN" name="group_by_mpn" context="{'group_by': 'mpn'}"/>
+            <!-- Replace the default search field to include MPN -->
+            <xpath expr="//field[@name='name']" position="replace">
+                <field name="name" string="Product"
+                    filter_domain="['|', '|', '|', '|', '|',
+                                    ('default_code', 'ilike', self),
+                                    ('product_variant_ids.default_code', 'ilike', self),
+                                    ('name', 'ilike', self),
+                                    ('barcode', 'ilike', self),
+                                    ('manufacturer', 'ilike', self),
+                                    ('mpn', 'ilike', self)
+                                    ]"/>
             </xpath>
         </field>
     </record>
