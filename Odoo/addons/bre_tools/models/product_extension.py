@@ -17,6 +17,7 @@ class ProductTemplate(models.Model):
         readonly=True  # Optional: set to True if you want it to be locked in the UI
     )
     library = fields.Char(string='Library', readonly=True)
+    library_search = fields.Char(string='Library Search', compute='_compute_library_search', store=True)
     component_sort = fields.Float(string='Component Sort', readonly=True)
 
     # Define the related field for the description in the BRE Data tab
@@ -32,6 +33,11 @@ class ProductTemplate(models.Model):
     def _onchange_name(self):
         if self.name and self.name != self.bre_description:
             self.bre_description = str(self.name)
+
+    @api.depends('library')
+    def _compute_library_search(self):
+        for record in self:
+            record.library_search = record.library.replace('_', ' ') if record.library else ''
 
     @api.depends('seller_ids.jlcpcb_inventory', 'seller_ids.global_sourcing_inventory', 'seller_ids.consigned_inventory')
     def _compute_primary_jlcpcb_pn(self):

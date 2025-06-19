@@ -100,13 +100,16 @@
             <!-- Replace the default search field to include MPN -->
             <xpath expr="//field[@name='name']" position="replace">
                 <field name="name" string="Product"
-                    filter_domain="['|', '|', '|', '|', '|',
+                    filter_domain="['|', '|', '|', '|', '|', '|', '|', '|',
                                     ('default_code', 'ilike', self),
                                     ('product_variant_ids.default_code', 'ilike', self),
                                     ('name', 'ilike', self),
+                                    ('component_value', 'ilike', self),
                                     ('barcode', 'ilike', self),
                                     ('manufacturer', 'ilike', self),
-                                    ('mpn', 'ilike', self)
+                                    ('mpn', 'ilike', self),
+                                    ('primary_jlcpcb_pn', 'ilike', self),
+                                    ('library_search', 'ilike', self)
                                     ]"/>
             </xpath>
         </field>
