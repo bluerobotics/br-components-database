@@ -12,11 +12,15 @@
                         <field name="datasheet" widget="url" placeholder="Enter datasheet link here"/>
                         <field name="manufacturer" placeholder="Enter manufacturer here"/>
                         <field name="mpn" placeholder="Enter manufacturer part number here"/>
+                        <field name="primary_jlcpcb_pn" readonly="1"/>                        
                         <field name="library" readonly="1"/>
                         <field name="component_sort" readonly="1"/>
                         <field name="bre_number"/>
                     </group>
-                    <button name="generate_bre_number" type="object" string="Generate BRE Number" class="btn oe_inline btn-primary" style="align-items: left;"/>
+                    <div class="d-flex gap-2">
+                        <button name="generate_bre_number" type="object" string="Generate BRE Number" class="btn oe_inline btn-primary"/>
+                        <button name="action_save_bre_fields" string="Save BRE Fields" type="object" class="btn btn-secondary"/>
+                    </div>
                 </page>
             </xpath>
         </field>
@@ -86,4 +90,24 @@
             </xpath>
         </field>
     </record>
+
+    <!-- Add MPN to the search in Odoo -->
+    <record id="view_product_template_search_custom" model="ir.ui.view">
+        <field name="name">product.template.search.inherit.mpn</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_search_view"/>
+        <field name="arch" type="xml">
+            <!-- Add MPN field after the name search field -->
+            <xpath expr="//field[@name='name']" position="after">
+                <field name="mpn" string="MPN" filter_domain="[('mpn', 'ilike', self)]"/>
+            </xpath>
+
+            <!-- Add group-by for MPN inside the group tag -->
+            <xpath expr="//group" position="inside">
+                <filter string="MPN" name="group_by_mpn" context="{'group_by': 'mpn'}"/>
+            </xpath>
+        </field>
+    </record>
 </odoo>
+
+
