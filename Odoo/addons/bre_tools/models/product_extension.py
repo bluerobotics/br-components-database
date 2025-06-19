@@ -36,16 +36,19 @@ class ProductTemplate(models.Model):
     @api.depends('seller_ids.jlcpcb_inventory', 'seller_ids.global_sourcing_inventory', 'seller_ids.consigned_inventory')
     def _compute_primary_jlcpcb_pn(self):
         for record in self:
-            primary_jlc = None
-            max_stock = -1
+            # Only update if BRE number is provided
+            if record.bre_number:
 
-            for supplier in record.seller_ids:
-                if supplier.partner_id and 'jlcpcb' in supplier.partner_id.name.strip().lower():
-                    stock = max(supplier.jlcpcb_inventory, supplier.global_sourcing_inventory + supplier.consigned_inventory)
-                    if stock >= max_stock:
-                        max_stock = stock
-                        primary_jlc = supplier.product_code
-            record.primary_jlcpcb_pn = primary_jlc
+                primary_jlc = None
+                max_stock = -1
+
+                for supplier in record.seller_ids:
+                    if supplier.partner_id and 'jlcpcb' in supplier.partner_id.name.strip().lower():
+                        stock = max(supplier.jlcpcb_inventory, supplier.global_sourcing_inventory + supplier.consigned_inventory)
+                        if stock >= max_stock:
+                            max_stock = stock
+                            primary_jlc = supplier.product_code
+                record.primary_jlcpcb_pn = primary_jlc
 
     def generate_bre_number(self):
         """Generate the next BRE Number for the product and set it to the default_code field.
