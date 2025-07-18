@@ -1,6 +1,7 @@
 """
 Step 3 of the initial Kicad library initialization into Odoo
 Import all Kicad libaries into Odoo with all of the part metadata and vendor info that currently lives in Kicad fields. Only adds parts with BRE Numbers.
+THIS NEEDS TO BE UPDATED TO INCLUDE NEW FIELDS
 """
 
 import xmlrpc.client
