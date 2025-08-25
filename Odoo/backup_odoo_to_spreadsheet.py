@@ -211,9 +211,8 @@ column_dict = {}
 col_number = 0
 for col_name in column_labels:
     column_dict[col_name] = xl_col_to_name(col_number)
-    print(xl_col_to_name(col_number))
     col_number += 1
-print(column_dict)
+
 # row and col will be our pointers to cells in the sheet
 row = 0
 col = 0
@@ -258,7 +257,7 @@ for idx, part_row in odoo_parts_df.iterrows():
     for col_label, cell_value in part_dict.items():
         worksheet.write(f"{column_dict[col_label]}{row+1}", cell_value)
 
-    print(INDENT + f"{part_dict} added to spreadsheet")
+    # print(INDENT + f"{part_dict} added to spreadsheet")
     row += 1
 
 
